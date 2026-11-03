@@ -1,85 +1,32 @@
 # Veltrio
 
-**Ein einfacher Downloadmanager für Linux.**
+Eigenständiger Linux Download Manager mit Go-Backend und responsiver Weboberfläche im LeaseEditor-inspirierten Look.
 
-Veltrio basiert auf der Download-Engine von [Gopeed](https://github.com/GopeedLab/gopeed) und verwendet die Gestaltung deines LeaseEditor-Projekts (dunkelblau, Blau/Cyan-Akzente und dein Logo). Die Oberfläche konzentriert sich auf die Grundfunktionen: URL einfügen, Download starten, pausieren, fortsetzen, entfernen und Fortschritt ansehen.
-
-## Unterstützte Ziele
-
-| Variante | Architektur |
-|---|---|
-| Docker Multi-Arch | Linux AMD64 (`linux/amd64`) |
-| Docker Multi-Arch | Linux ARM64 (`linux/arm64`) |
-| Native Linux-Binärdatei | AMD64 |
-| Native Linux-Binärdatei | ARM64 |
-
-Es werden keine Windows-, macOS-, Android- oder iOS-Builds und keine DEB-, RPM-, PKG- oder sonstigen Installationspakete erzeugt.
+## Funktionen
+- HTTP/HTTPS-Downloads
+- Hinzufügen, pausieren, fortsetzen und löschen
+- Fortschritt, Dateigröße und Geschwindigkeit
+- Persistenter Downloadstatus und Fortsetzen nach Neustart (wenn der Server Range-Requests unterstützt)
+- Docker Multi-Arch: Linux AMD64 und ARM64
+- Native Linux-Binaries: AMD64 und ARM64
 
 ## Docker
-
-Im Verzeichnis mit `compose.yaml` und `config.json`:
-
 ```bash
-mkdir -p data Downloads
-docker compose up -d
+docker compose up -d --build
 ```
+Danach `http://localhost:9999` öffnen. Downloads liegen in `./Downloads`, Statusdaten in `./data`.
 
-Das Compose-Beispiel verwendet `ghcr.io/DEIN-GITHUB-NAME/veltrio:latest`. Ersetze den Platzhalter nach dem Anlegen deines GitHub-Repositories durch dessen Namen.
-
-Die Weboberfläche ist anschließend unter `http://SERVER-IP:9999` erreichbar.
-
-Die Container-Verzeichnisse:
-- `/app/data` – interne Downloadmanager-Datenbank und Einstellungen
-- `/app/Downloads` – heruntergeladene Dateien
-
-Der Container läuft als unprivilegierter Benutzer. Stelle sicher, dass die eingebundenen Host-Verzeichnisse für die Container-UID schreibbar sind.
-
-## Native Linux-Version
-
-Die passenden Binärdateien `veltrio-linux-amd64` oder `veltrio-linux-arm64` aus den GitHub-Releases herunterladen. Daneben `config.json` ablegen und aus diesem Verzeichnis starten:
-
+## Native Builds
 ```bash
-chmod +x veltrio-linux-amd64
-./veltrio-linux-amd64 --config ./config.json
+go test ./...
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o veltrio-linux-amd64 ./cmd/veltrio
+GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o veltrio-linux-arm64 ./cmd/veltrio
 ```
-
-Für ARM64 entsprechend `veltrio-linux-arm64` verwenden. Die Downloads werden standardmäßig im Unterordner `Downloads` abgelegt; die Datenbank liegt in `data`.
 
 ## Konfiguration
+- `VELTRIO_ADDR` (Standard `:9999`)
+- `VELTRIO_DATA` (Standard `/app/data`)
+- `VELTRIO_DOWNLOADS` (Standard `/app/Downloads`)
 
-`config.json` ist für Docker und native Starts gleich aufgebaut:
-
-```json
-{
-  "address": "0.0.0.0",
-  "port": 9999,
-  "storageDir": "./data",
-  "downloadConfig": {
-    "downloadDir": "./Downloads"
-  }
-}
-```
-
-Optional lassen sich `username` und `password` in `config.json` ergänzen, um die Webanmeldung zu aktivieren. Wenn du Veltrio im Netzwerk erreichbar machst, setze ein eigenes Passwort und veröffentliche den Port nicht ungeschützt im Internet.
-
-## Oberfläche
-
-Enthalten sind nur:
-- Download per URL hinzufügen
-- Download pausieren und fortsetzen
-- Download entfernen
-- Status, Fortschritt, Dateigröße und Geschwindigkeit anzeigen
-
-Keine Add-on-Verwaltung, keine Erweiterungsoberfläche, keine Desktop-Clients, kein Updater und keine Paket-Installer.
-
-## Build
-
-Die GitHub-Actions-Workflows bauen ausschließlich:
-- Docker Multi-Arch: `linux/amd64` und `linux/arm64`
-- Native Linux: `amd64` und `arm64`
-
-Native Builds werden als einzelne ausführbare Dateien veröffentlicht. Es werden keine Paketformate erstellt.
-
-## Lizenz und Herkunft
-
-Veltrio verwendet den Gopeed-Quellcode als technische Download-Engine. Der Upstream-Quellcode ist unter GPL-3.0 lizenziert; diese Lizenz- und Weitergabepflichten gelten auch für abgeleitete Versionen. Die originale Lizenzdatei bleibt im Repository enthalten. Das Veltrio-Branding und die Oberfläche wurden für dieses Projekt angepasst.
+## Hinweis
+Dies ist eine bewusst schlanke erste Eigenentwicklung. Aktuell werden HTTP und HTTPS unterstützt; FTP, BitTorrent, Browser-Erweiterungen und parallele Segment-Downloads sind nicht enthalten.

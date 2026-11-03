@@ -1,8 +1,5 @@
 .git
 .github
-**/*_test.go
-README*
-CONTRIBUTING*
-ui
-_docs
-_examples
+data
+Downloads
+*.zip

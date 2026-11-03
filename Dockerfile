@@ -1,21 +1,17 @@
-FROM golang:1.25.4-alpine AS build
+FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS build
+ARG TARGETOS=linux
+ARG TARGETARCH
 WORKDIR /src
-COPY go.mod go.sum ./
-RUN go mod download
+COPY go.mod ./
 COPY . .
-ARG APP_VERSION=dev
-RUN CGO_ENABLED=0 go build -trimpath -tags nosqlite,web \
-    -ldflags="-s -w -X github.com/GopeedLab/gopeed/pkg/base.Version=${APP_VERSION} -X github.com/GopeedLab/gopeed/pkg/base.InDocker=true" \
-    -o /out/veltrio ./cmd/web
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /out/veltrio ./cmd/veltrio
 
-FROM alpine:3.23
-RUN addgroup -S veltrio && adduser -S -G veltrio veltrio \
-    && mkdir -p /app/data /app/Downloads \
-    && chown -R veltrio:veltrio /app
+FROM alpine:3.21
+RUN addgroup -S veltrio && adduser -S -G veltrio veltrio && mkdir -p /app/data /app/Downloads && chown -R veltrio:veltrio /app
 WORKDIR /app
 COPY --from=build /out/veltrio /usr/local/bin/veltrio
-COPY config.json /app/config.json
-VOLUME ["/app/data", "/app/Downloads"]
-EXPOSE 9999
 USER veltrio
-ENTRYPOINT ["/usr/local/bin/veltrio", "--config", "/app/config.json"]
+ENV VELTRIO_ADDR=:9999 VELTRIO_DATA=/app/data VELTRIO_DOWNLOADS=/app/Downloads
+EXPOSE 9999
+VOLUME ["/app/data","/app/Downloads"]
+ENTRYPOINT ["/usr/local/bin/veltrio"]
