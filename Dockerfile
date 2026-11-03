@@ -11,7 +11,7 @@ RUN addgroup -S veltrio && adduser -S -G veltrio veltrio && mkdir -p /app/data /
 WORKDIR /app
 COPY --from=build /out/veltrio /usr/local/bin/veltrio
 USER veltrio
-ENV VELTRIO_ADDR=:9999 VELTRIO_DATA=/app/data VELTRIO_DOWNLOADS=/app/Downloads
+ENV VELTRIO_CONFIG=/app/data/config.yaml VELTRIO_ADDR=:9999 VELTRIO_DATA=/app/data VELTRIO_DOWNLOADS=/app/Downloads
 EXPOSE 9999
 VOLUME ["/app/data","/app/Downloads"]
 ENTRYPOINT ["/usr/local/bin/veltrio"]
