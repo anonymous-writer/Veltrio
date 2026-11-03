@@ -1,0 +1,11 @@
+services:
+  veltrio:
+    image: ghcr.io/DEIN-GITHUB-NAME/veltrio:latest
+    container_name: veltrio
+    restart: unless-stopped
+    ports:
+      - "9999:9999"
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./data:/app/data
+      - ./Downloads:/app/Downloads
