@@ -16,3 +16,13 @@ downloads:
 
 logging:
   level: "info"
+
+# NTFY Push notifications
+ntfy_enabled: true
+ntfy_debug: true
+database_debug: true
+ntfy_url: "http://127.0.0.1:2586/PI-Micha-Info"
+ntfy_token: ""
+ntfy_notify_unknown_ipv4: true
+ntfy_priority: "high"
+ntfy_timeout_seconds: 10

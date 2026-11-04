@@ -36,6 +36,7 @@ type Manager struct {
 	client             *http.Client
 	deleteFileOnRemove bool
 	resumeOnStart      bool
+	notify             func(string, string)
 	slots              chan struct{}
 }
 
@@ -69,6 +70,15 @@ func NewManagerWithOptions(stateFile, dir string, maxConcurrent int, resumeOnSta
 		}
 	}
 	return m, nil
+}
+func (m *Manager) SetNotifier(fn func(string, string)) { m.mu.Lock(); m.notify = fn; m.mu.Unlock() }
+func (m *Manager) notifyEvent(title, message string) {
+	m.mu.Lock()
+	fn := m.notify
+	m.mu.Unlock()
+	if fn != nil {
+		go fn(title, message)
+	}
 }
 func (m *Manager) persistLocked() {
 	items := make([]Item, 0, len(m.jobs))
@@ -291,6 +301,7 @@ func (m *Manager) run(id string) {
 					x.item.Speed = 0
 					if x.item.Status == "downloading" {
 						x.item.Status = "completed"
+						go m.notifyEvent("Veltrio: Download abgeschlossen", x.item.Filename)
 					}
 				}
 				m.persistLocked()

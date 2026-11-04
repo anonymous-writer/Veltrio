@@ -13,15 +13,21 @@ import (
 )
 
 type Server struct {
-	manager            *Manager
-	assets             fs.FS
-	version            string
-	downloadDir        string
-	maxConcurrent      int
-	resumeOnStart      bool
-	deleteFileOnRemove bool
-	logLevel           string
-	mux                *http.ServeMux
+	manager               *Manager
+	assets                fs.FS
+	version               string
+	downloadDir           string
+	maxConcurrent         int
+	resumeOnStart         bool
+	deleteFileOnRemove    bool
+	logLevel              string
+	ntfyEnabled           bool
+	ntfyDebug             bool
+	databaseDebug         bool
+	ntfyURL               string
+	ntfyPriority          string
+	ntfyNotifyUnknownIPv4 bool
+	mux                   *http.ServeMux
 }
 
 func New(stateFile, downloadDir, version string) (*Server, error) {
@@ -38,12 +44,23 @@ func NewWithConfig(stateFile, downloadDir, version string, maxConcurrent int, re
 	return s, nil
 }
 func (s *Server) Handler() http.Handler { return s.mux }
+func (s *Server) ConfigureNtfy(n Ntfy, databaseDebug, notifyUnknownIPv4 bool) {
+	s.ntfyEnabled = n.Enabled && strings.TrimSpace(n.URL) != ""
+	s.ntfyDebug = n.Debug
+	s.databaseDebug = databaseDebug
+	s.ntfyNotifyUnknownIPv4 = notifyUnknownIPv4
+	s.ntfyURL = n.URL
+	s.ntfyPriority = n.Priority
+	if n.Enabled && strings.TrimSpace(n.URL) != "" {
+		s.manager.SetNotifier(func(title, message string) { _ = n.Notify(title, message) })
+	}
+}
 func (s *Server) routes() {
 	s.mux.HandleFunc("/api/downloads", s.downloads)
 	s.mux.HandleFunc("/api/downloads/", s.downloadAction)
 	s.mux.HandleFunc("/api/version", s.versionStatus)
 	s.mux.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, map[string]any{"status": "ok", "serverTime": time.Now().Format(time.RFC3339), "downloadDir": s.downloadDir, "maxConcurrent": s.maxConcurrent, "resumeOnStart": s.resumeOnStart, "deleteFileOnRemove": s.deleteFileOnRemove, "logLevel": s.logLevel})
+		writeJSON(w, map[string]any{"status": "ok", "serverTime": time.Now().Format(time.RFC3339), "downloadDir": s.downloadDir, "maxConcurrent": s.maxConcurrent, "resumeOnStart": s.resumeOnStart, "deleteFileOnRemove": s.deleteFileOnRemove, "logLevel": s.logLevel, "ntfyEnabled": s.ntfyEnabled, "ntfyDebug": s.ntfyDebug, "databaseDebug": s.databaseDebug, "ntfyPriority": s.ntfyPriority, "ntfyNotifyUnknownIPv4": s.ntfyNotifyUnknownIPv4})
 	})
 	s.mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]string{"status": "ok", "name": "Veltrio"})
