@@ -19,8 +19,8 @@ jobs:
       matrix:
         arch: [amd64, arm64]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
       - name: Test
@@ -42,7 +42,7 @@ jobs:
           tar -C dist/package -czf "dist/veltrio-linux-${{ matrix.arch }}.tar.gz" .
           cp "dist/package/veltrio-linux-${{ matrix.arch }}" "dist/veltrio-linux-${{ matrix.arch }}"
       - name: Upload build package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: veltrio-linux-${{ matrix.arch }}
           path: |
@@ -57,7 +57,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           pattern: veltrio-linux-*
@@ -67,7 +67,7 @@ jobs:
           cd dist
           sha256sum veltrio-linux-amd64.tar.gz veltrio-linux-arm64.tar.gz veltrio-linux-amd64 veltrio-linux-arm64 > SHA256SUMS
       - name: Publish release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             dist/veltrio-linux-amd64.tar.gz
