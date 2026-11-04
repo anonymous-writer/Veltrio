@@ -1,4 +1,4 @@
-name: Build Linux binaries
+name: Build Linux release assets
 
 on:
   push:
@@ -12,8 +12,10 @@ permissions:
 
 jobs:
   build:
+    name: Build Linux ${{ matrix.arch }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         arch: [amd64, arm64]
     steps:
@@ -22,16 +24,57 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Test
-        run: go test ./...
-      - name: Build
+        run: |
+          go test ./...
+          go vet ./...
+      - name: Build binary and tar.gz
         env:
           GOOS: linux
           GOARCH: ${{ matrix.arch }}
           CGO_ENABLED: 0
         run: |
-          mkdir -p dist
-          go build -trimpath -ldflags="-s -w -X main.version=${GITHUB_REF_NAME}" -o dist/veltrio-linux-${{ matrix.arch }} ./cmd/veltrio
-      - uses: actions/upload-artifact@v4
+          VERSION="${GITHUB_REF_NAME}"
+          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then VERSION="dev"; fi
+          mkdir -p dist/package
+          go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o "dist/package/veltrio-linux-${{ matrix.arch }}" ./cmd/veltrio
+          cp docs/veltrio.service dist/package/
+          cp scripts/update-veltrio-arm64.sh dist/package/
+          tar -C dist/package -czf "dist/veltrio-linux-${{ matrix.arch }}.tar.gz" .
+          cp "dist/package/veltrio-linux-${{ matrix.arch }}" "dist/veltrio-linux-${{ matrix.arch }}"
+      - name: Upload build package
+        uses: actions/upload-artifact@v4
         with:
           name: veltrio-linux-${{ matrix.arch }}
-          path: dist/veltrio-linux-${{ matrix.arch }}
+          path: |
+            dist/veltrio-linux-${{ matrix.arch }}.tar.gz
+            dist/veltrio-linux-${{ matrix.arch }}
+
+  release:
+    name: Publish GitHub Release assets
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: veltrio-linux-*
+          merge-multiple: true
+      - name: Create checksums
+        run: |
+          cd dist
+          sha256sum veltrio-linux-amd64.tar.gz veltrio-linux-arm64.tar.gz veltrio-linux-amd64 veltrio-linux-arm64 > SHA256SUMS
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/veltrio-linux-amd64.tar.gz
+            dist/veltrio-linux-arm64.tar.gz
+            dist/veltrio-linux-amd64
+            dist/veltrio-linux-arm64
+            dist/SHA256SUMS
+            scripts/update-veltrio-arm64.sh
+            docs/veltrio.service
+          generate_release_notes: true
