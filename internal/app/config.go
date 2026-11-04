@@ -1,4 +1,4 @@
-package config
+package app
 
 import (
 	"bufio"
@@ -23,7 +23,7 @@ func Defaults() Config {
 	}
 	return Config{
 		Host:         "0.0.0.0",
-		Port:         9999,
+		Port:         3010,
 		DataDir:      filepath.Join(home, ".local", "share", "veltrio"),
 		DownloadsDir: filepath.Join(home, "Downloads", "Veltrio"),
 	}

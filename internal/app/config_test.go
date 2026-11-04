@@ -1,4 +1,4 @@
-package config
+package app
 
 import (
 	"os"
@@ -14,7 +14,7 @@ func TestLoadCreatesDefaultAndReadsValues(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Port != 9999 {
+	if cfg.Port != 3010 {
 		t.Fatalf("default port=%d", cfg.Port)
 	}
 	if _, err := os.Stat(file); err != nil {

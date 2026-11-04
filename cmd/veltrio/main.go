@@ -10,8 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"veltrio/internal/config"
-	"veltrio/internal/server"
+	"veltrio/internal/app"
 )
 
 var version = "dev"
@@ -38,7 +37,7 @@ func main() {
 		return
 	}
 
-	cfg, err := config.Load(config.ExpandPath(*configPath))
+	cfg, err := app.Load(configPathExpanded(*configPath))
 	if err != nil {
 		log.Fatalf("Konfiguration: %v", err)
 	}
@@ -77,8 +76,8 @@ func main() {
 			cfg.DownloadsDir = *downloadsDir
 		}
 	})
-	cfg.DataDir = config.ExpandPath(cfg.DataDir)
-	cfg.DownloadsDir = config.ExpandPath(cfg.DownloadsDir)
+	cfg.DataDir = app.ExpandPath(cfg.DataDir)
+	cfg.DownloadsDir = app.ExpandPath(cfg.DownloadsDir)
 	if cfg.Port < 1 || cfg.Port > 65535 {
 		log.Fatal("Port muss zwischen 1 und 65535 liegen")
 	}
@@ -89,7 +88,7 @@ func main() {
 		log.Fatalf("Download-Verzeichnis: %v", err)
 	}
 
-	app, err := server.New(filepath.Join(cfg.DataDir, "veltrio.json"), cfg.DownloadsDir)
+	app, err := app.New(filepath.Join(cfg.DataDir, "veltrio.json"), cfg.DownloadsDir, version)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -97,6 +96,7 @@ func main() {
 	log.Printf("Veltrio %s listening on %s (config: %s)", version, addr, *configPath)
 	log.Fatal(http.ListenAndServe(addr, app.Handler()))
 }
+func configPathExpanded(p string) string { return app.ExpandPath(p) }
 func env(k, f string) string {
 	if v := os.Getenv(k); v != "" {
 		return v

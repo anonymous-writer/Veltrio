@@ -1,0 +1,14 @@
+[Unit]
+Description=Veltrio Download Manager
+After=network-online.target dnsmasq.service
+Wants=network-online.target dnsmasq.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/veltrio
+User=pi\nGroup=pi\nExecStart=/usr/bin/veltrio --config /home/pi/veltrio/config.yaml
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target

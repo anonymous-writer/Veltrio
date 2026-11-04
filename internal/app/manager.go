@@ -1,4 +1,4 @@
-package downloader
+package app
 
 import (
 	"context"
@@ -36,7 +36,7 @@ type Manager struct {
 	client         *http.Client
 }
 
-func New(stateFile, dir string) (*Manager, error) {
+func NewManager(stateFile, dir string) (*Manager, error) {
 	m := &Manager{jobs: map[string]*job{}, stateFile: stateFile, dir: dir, client: &http.Client{Timeout: 0}}
 	b, err := os.ReadFile(stateFile)
 	if err == nil {

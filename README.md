@@ -13,7 +13,7 @@ Eigenständiger Linux Download Manager mit Go-Backend und responsiver Weboberfl�
 
 ## Native Installation und Start
 ```bash
-./veltrio
+./veltrio-linux-amd64
 ```
 Beim ersten Start legt Veltrio automatisch `config.yaml` im aktuellen Verzeichnis an. Die Standardpfade für Daten und Downloads liegen im Home-Verzeichnis des ausführenden Benutzers.
 
@@ -21,7 +21,7 @@ Beim ersten Start legt Veltrio automatisch `config.yaml` im aktuellen Verzeichni
 ```yaml
 server:
   host: "0.0.0.0"
-  port: 9999
+  port: 3010
 
 paths:
   data: "~/.local/share/veltrio"
@@ -34,7 +34,7 @@ paths:
 veltrio --help
 veltrio --version
 veltrio --config /pfad/zu/config.yaml
-veltrio --port 8080
+veltrio --port 3010
 veltrio --host 127.0.0.1
 veltrio --data /pfad/zu/daten
 veltrio --downloads /pfad/zu/downloads
@@ -45,7 +45,7 @@ Explizite Startparameter überschreiben die Konfiguration. Danach folgen Umgebun
 ```bash
 docker compose up -d --build
 ```
-Danach `http://localhost:9999` öffnen. Downloads liegen in `./Downloads`, Statusdaten und automatisch angelegte Konfiguration in `./data`.
+Danach `http://localhost:3010` öffnen. Downloads liegen in `./Downloads`, Statusdaten und automatisch angelegte Konfiguration in `./data`.
 
 ## Native Builds
 ```bash
@@ -54,5 +54,5 @@ GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o veltrio-linux-amd64 ./cmd/velt
 GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o veltrio-linux-arm64 ./cmd/veltrio
 ```
 
-## Hinweis
+## GitHub- und Build-Status\nDie Weboberfläche zeigt die zuletzt veröffentlichte GitHub-Version sowie den Zeitpunkt des letzten erfolgreichen GitHub-Actions-Builds an. Dafür benötigt der Server ausgehenden Internetzugriff auf die GitHub-API.\n\n## Hinweis
 Dies ist eine bewusst schlanke erste Eigenentwicklung. Aktuell werden HTTP und HTTPS unterstützt; FTP, BitTorrent, Browser-Erweiterungen und parallele Segment-Downloads sind nicht enthalten.

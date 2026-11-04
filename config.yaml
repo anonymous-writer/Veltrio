@@ -1,0 +1,10 @@
+# Veltrio configuration
+# Command-line options override these values.
+
+server:
+  host: "0.0.0.0"
+  port: 3010
+
+paths:
+  data: "/home/oai/.local/share/veltrio"
+  downloads: "/home/oai/Downloads/Veltrio"
