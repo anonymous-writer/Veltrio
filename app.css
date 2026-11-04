@@ -10,3 +10,13 @@
 
 .system-time{margin-top:7px;text-align:right;color:#8fb5df;font-size:12px;letter-spacing:.01em}
 .system-time time{color:#c4e4ff;font-variant-numeric:tabular-nums}
+
+/* Combined readiness and server clock, with language selector */
+.system{display:flex;align-items:center;justify-content:space-between;gap:18px;min-width:390px;padding:9px 15px}
+.system-label{display:inline-flex;align-items:center;white-space:nowrap}
+.system-clock{color:#8fb5df;white-space:nowrap;font-size:12px;font-variant-numeric:tabular-nums}
+.system-clock time{color:#c4e4ff}
+.language-picker{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:8px;color:var(--muted);font-size:11px}
+.language-picker select{background:#101d2e;color:#c4e4ff;border:1px solid #2b4058;border-radius:8px;padding:5px 9px;font:inherit}
+@media(max-width:850px){.system{min-width:0;max-width:100%;flex-wrap:wrap;justify-content:space-between}.system-clock{white-space:normal}}
+@media(max-width:480px){.system{gap:8px}.system-clock{font-size:11px}}

@@ -143,3 +143,8 @@ downloads:
 logging:
   level: "info"
 ```
+
+
+## Interface languages
+
+Veltrio's web interface is available in German, English, and Spanish. Choose a language from the selector in the header; your choice is saved in the browser.
