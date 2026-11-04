@@ -43,7 +43,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("/api/downloads/", s.downloadAction)
 	s.mux.HandleFunc("/api/version", s.versionStatus)
 	s.mux.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, map[string]any{"status": "ok", "downloadDir": s.downloadDir, "maxConcurrent": s.maxConcurrent, "resumeOnStart": s.resumeOnStart, "deleteFileOnRemove": s.deleteFileOnRemove, "logLevel": s.logLevel})
+		writeJSON(w, map[string]any{"status": "ok", "serverTime": time.Now().Format(time.RFC3339), "downloadDir": s.downloadDir, "maxConcurrent": s.maxConcurrent, "resumeOnStart": s.resumeOnStart, "deleteFileOnRemove": s.deleteFileOnRemove, "logLevel": s.logLevel})
 	})
 	s.mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]string{"status": "ok", "name": "Veltrio"})
@@ -100,13 +100,14 @@ func (s *Server) frontend(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) versionStatus(w http.ResponseWriter, r *http.Request) {
 	type status struct {
-		Version    string `json:"version"`
-		Channel    string `json:"channel"`
-		Repository string `json:"repository"`
-		ReleaseURL string `json:"releaseUrl,omitempty"`
-		UpdatedAt  string `json:"updatedAt,omitempty"`
-		RunURL     string `json:"runUrl,omitempty"`
-		Message    string `json:"message,omitempty"`
+		Version       string `json:"version"`
+		LatestVersion string `json:"latestVersion,omitempty"`
+		Channel       string `json:"channel"`
+		Repository    string `json:"repository"`
+		ReleaseURL    string `json:"releaseUrl,omitempty"`
+		UpdatedAt     string `json:"updatedAt,omitempty"`
+		RunURL        string `json:"runUrl,omitempty"`
+		Message       string `json:"message,omitempty"`
 	}
 	result := status{Version: s.version, Channel: "Release", Repository: "https://github.com/anonymous-writer/Veltrio"}
 	client := &http.Client{Timeout: 5 * time.Second}
@@ -129,7 +130,7 @@ func (s *Server) versionStatus(w http.ResponseWriter, r *http.Request) {
 		HTMLURL string `json:"html_url"`
 	}
 	if err := fetch("https://api.github.com/repos/anonymous-writer/Veltrio/releases/latest", &release); err == nil && release.TagName != "" {
-		result.Version = release.TagName
+		result.LatestVersion = release.TagName
 		result.ReleaseURL = release.HTMLURL
 	} else {
 		result.Message = "GitHub-Status momentan nicht verfügbar"
