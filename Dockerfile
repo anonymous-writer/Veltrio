@@ -7,7 +7,7 @@ COPY go.mod ./
 COPY . .
 RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w -X main.version=${APP_VERSION}" -o /out/veltrio ./cmd/veltrio
 
-FROM alpine:3.21
+FROM alpine:3.24
 RUN addgroup -S veltrio && adduser -S -G veltrio veltrio && mkdir -p /app/data /app/Downloads && chown -R veltrio:veltrio /app
 WORKDIR /app
 COPY --from=build /out/veltrio /usr/local/bin/veltrio
