@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -36,7 +38,7 @@ type Manager struct {
 	client             *http.Client
 	deleteFileOnRemove bool
 	resumeOnStart      bool
-	notify             func(string, string)
+	notify             func(string, string) error
 	slots              chan struct{}
 }
 
@@ -71,13 +73,21 @@ func NewManagerWithOptions(stateFile, dir string, maxConcurrent int, resumeOnSta
 	}
 	return m, nil
 }
-func (m *Manager) SetNotifier(fn func(string, string)) { m.mu.Lock(); m.notify = fn; m.mu.Unlock() }
+func (m *Manager) SetNotifier(fn func(string, string) error) {
+	m.mu.Lock()
+	m.notify = fn
+	m.mu.Unlock()
+}
 func (m *Manager) notifyEvent(title, message string) {
 	m.mu.Lock()
 	fn := m.notify
 	m.mu.Unlock()
 	if fn != nil {
-		go fn(title, message)
+		go func() {
+			if err := fn(title, message); err != nil {
+				log.Printf("ntfy: download notification failed: %v", err)
+			}
+		}()
 	}
 }
 func (m *Manager) persistLocked() {
@@ -294,7 +304,7 @@ func (m *Manager) run(id string) {
 			}
 		}
 		if readErr != nil {
-			if readErr.Error() == "EOF" {
+			if errors.Is(readErr, io.EOF) {
 				m.mu.Lock()
 				if x := m.jobs[id]; x != nil {
 					x.item.Downloaded += bytesSince

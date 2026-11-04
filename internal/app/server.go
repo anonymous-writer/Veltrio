@@ -52,7 +52,7 @@ func (s *Server) ConfigureNtfy(n Ntfy, databaseDebug, notifyUnknownIPv4 bool) {
 	s.ntfyURL = n.URL
 	s.ntfyPriority = n.Priority
 	if n.Enabled && strings.TrimSpace(n.URL) != "" {
-		s.manager.SetNotifier(func(title, message string) { _ = n.Notify(title, message) })
+		s.manager.SetNotifier(func(title, message string) error { return n.Notify(title, message) })
 	}
 }
 func (s *Server) routes() {
