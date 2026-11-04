@@ -88,7 +88,7 @@ func main() {
 		log.Fatalf("Download-Verzeichnis: %v", err)
 	}
 
-	app, err := app.NewWithConfig(filepath.Join(cfg.DataDir, "veltrio.json"), cfg.DownloadsDir, version, cfg.MaxConcurrent, cfg.ResumeOnStart, cfg.DeleteFileOnRemove)
+	app, err := app.NewWithConfig(filepath.Join(cfg.DataDir, "veltrio.json"), cfg.DownloadsDir, version, cfg.MaxConcurrent, cfg.ResumeOnStart, cfg.DeleteFileOnRemove, cfg.LogLevel)
 	if err != nil {
 		log.Fatal(err)
 	}

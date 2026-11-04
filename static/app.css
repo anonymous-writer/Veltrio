@@ -4,3 +4,6 @@
 .system-wrap{text-align:right}.storage-path{margin-top:8px;color:var(--muted);font-size:11px;max-width:420px;overflow-wrap:anywhere}.storage-path code{color:#a9d9ff;font-family:ui-monospace,SFMono-Regular,monospace}
 
 @media(max-width:850px){.system-wrap{display:none}}
+
+/* Runtime configuration indicators */
+.system-wrap{text-align:right;max-width:520px}.storage-path{margin-top:8px;max-width:520px;overflow-wrap:anywhere}.config-lights{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:6px;margin-top:9px}.config-light{display:inline-flex;align-items:center;gap:6px;border:1px solid #2b4058;border-radius:20px;padding:5px 8px;font-size:10px;color:#a9bdd5;background:#101d2e;white-space:nowrap}.config-light i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#8798aa}.config-light.on i{background:#42d6a0;box-shadow:0 0 8px #42d6a0}.config-light.off i{background:#f0ad4e;box-shadow:0 0 8px #f0ad4e}.config-light.info i{background:#55baff;box-shadow:0 0 8px #55baff}.config-light.pending i{background:#8798aa}@media(max-width:850px){.system-wrap{display:block;text-align:left;max-width:100%;margin-top:18px}.config-lights{justify-content:flex-start}}

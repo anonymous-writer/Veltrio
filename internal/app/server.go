@@ -13,23 +13,27 @@ import (
 )
 
 type Server struct {
-	manager     *Manager
-	assets      fs.FS
-	version     string
-	downloadDir string
-	mux         *http.ServeMux
+	manager            *Manager
+	assets             fs.FS
+	version            string
+	downloadDir        string
+	maxConcurrent      int
+	resumeOnStart      bool
+	deleteFileOnRemove bool
+	logLevel           string
+	mux                *http.ServeMux
 }
 
 func New(stateFile, downloadDir, version string) (*Server, error) {
-	return NewWithConfig(stateFile, downloadDir, version, 3, true, true)
+	return NewWithConfig(stateFile, downloadDir, version, 3, true, true, "info")
 }
-func NewWithConfig(stateFile, downloadDir, version string, maxConcurrent int, resumeOnStart, deleteFileOnRemove bool) (*Server, error) {
+func NewWithConfig(stateFile, downloadDir, version string, maxConcurrent int, resumeOnStart, deleteFileOnRemove bool, logLevel string) (*Server, error) {
 	assets := webassets.FS()
 	m, err := NewManagerWithOptions(stateFile, downloadDir, maxConcurrent, resumeOnStart, deleteFileOnRemove)
 	if err != nil {
 		return nil, err
 	}
-	s := &Server{manager: m, assets: assets, mux: http.NewServeMux(), version: version, downloadDir: downloadDir}
+	s := &Server{manager: m, assets: assets, mux: http.NewServeMux(), version: version, downloadDir: downloadDir, maxConcurrent: maxConcurrent, resumeOnStart: resumeOnStart, deleteFileOnRemove: deleteFileOnRemove, logLevel: logLevel}
 	s.routes()
 	return s, nil
 }
@@ -39,7 +43,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("/api/downloads/", s.downloadAction)
 	s.mux.HandleFunc("/api/version", s.versionStatus)
 	s.mux.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, map[string]any{"status": "ok", "downloadDir": s.downloadDir})
+		writeJSON(w, map[string]any{"status": "ok", "downloadDir": s.downloadDir, "maxConcurrent": s.maxConcurrent, "resumeOnStart": s.resumeOnStart, "deleteFileOnRemove": s.deleteFileOnRemove, "logLevel": s.logLevel})
 	})
 	s.mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]string{"status": "ok", "name": "Veltrio"})
