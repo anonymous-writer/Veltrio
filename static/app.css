@@ -53,3 +53,8 @@ body[data-theme="light"] .empty h3{color:#233b56}
 body[data-theme="light"] footer{border-color:#d3deea}
 body[data-theme="light"] .status-footer a{color:#176bb4}
 body[data-theme="light"] #toast{background:#fff;border-color:#b9cde2;color:#203b58;box-shadow:0 8px 30px #25486b20}
+
+/* Keep the configuration indicators on one horizontal line when possible. */
+.config-lights{display:flex;flex-direction:row;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:6px;white-space:nowrap;overflow-x:auto;max-width:100%;padding-bottom:2px}
+.config-light{flex:0 0 auto}
+@media(max-width:850px){.config-lights{justify-content:flex-start}}
