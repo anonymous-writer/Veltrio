@@ -40,3 +40,18 @@ func TestUnknownKeyRejected(t *testing.T) {
 		t.Fatalf("expected unknown setting error, got %v", err)
 	}
 }
+
+func TestLoadDownloadAndLoggingSettings(t *testing.T) {
+	f := filepath.Join(t.TempDir(), "config.yaml")
+	content := "paths:\n  data: /tmp/vdata\n  downloads: /tmp/vdownloads\ndownloads:\n  max_concurrent: 3\n  resume_on_start: true\n  delete_file_on_remove: true\nlogging:\n  level: info\n"
+	if err := os.WriteFile(f, []byte(content), 0600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.MaxConcurrent != 3 || !cfg.ResumeOnStart || !cfg.DeleteFileOnRemove || cfg.LogLevel != "info" {
+		t.Fatalf("unexpected settings: %+v", cfg)
+	}
+}

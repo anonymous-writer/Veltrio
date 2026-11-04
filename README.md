@@ -129,3 +129,17 @@ Repository: [github.com/anonymous-writer/Veltrio](https://github.com/anonymous-w
 ## License
 
 Veltrio is distributed under the MIT License. See [LICENSE](LICENSE) for the full license text.
+
+## Download settings
+
+The `downloads` section controls parallel transfers, automatic resuming after startup, and whether deleting a download entry also removes its downloaded file. Set `delete_file_on_remove: false` to keep files on disk when removing entries. `logging.level` accepts `debug`, `info`, `warn`, or `error`.
+
+```yaml
+downloads:
+  max_concurrent: 3
+  resume_on_start: true
+  delete_file_on_remove: true
+
+logging:
+  level: "info"
+```

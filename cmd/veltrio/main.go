@@ -88,12 +88,14 @@ func main() {
 		log.Fatalf("Download-Verzeichnis: %v", err)
 	}
 
-	app, err := app.New(filepath.Join(cfg.DataDir, "veltrio.json"), cfg.DownloadsDir, version)
+	app, err := app.NewWithConfig(filepath.Join(cfg.DataDir, "veltrio.json"), cfg.DownloadsDir, version, cfg.MaxConcurrent, cfg.ResumeOnStart, cfg.DeleteFileOnRemove)
 	if err != nil {
 		log.Fatal(err)
 	}
 	addr := net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port))
-	log.Printf("Veltrio %s listening on %s (config: %s)", version, addr, *configPath)
+	if cfg.LogLevel == "debug" || cfg.LogLevel == "info" {
+		log.Printf("Veltrio %s listening on %s (config: %s, downloads: %s)", version, addr, *configPath, cfg.DownloadsDir)
+	}
 	log.Fatal(http.ListenAndServe(addr, app.Handler()))
 }
 func configPathExpanded(p string) string { return app.ExpandPath(p) }

@@ -10,10 +10,14 @@ import (
 )
 
 type Config struct {
-	Host         string
-	Port         int
-	DataDir      string
-	DownloadsDir string
+	Host               string
+	Port               int
+	DataDir            string
+	DownloadsDir       string
+	MaxConcurrent      int
+	ResumeOnStart      bool
+	DeleteFileOnRemove bool
+	LogLevel           string
 }
 
 func Defaults() Config {
@@ -22,10 +26,11 @@ func Defaults() Config {
 		home = "."
 	}
 	return Config{
-		Host:         "0.0.0.0",
-		Port:         3010,
-		DataDir:      filepath.Join(home, ".local", "share", "veltrio"),
-		DownloadsDir: filepath.Join(home, "Downloads", "Veltrio"),
+		Host:          "0.0.0.0",
+		Port:          3010,
+		DataDir:       filepath.Join(home, ".local", "share", "veltrio"),
+		DownloadsDir:  filepath.Join(home, "Downloads", "Veltrio"),
+		MaxConcurrent: 3, ResumeOnStart: true, DeleteFileOnRemove: true, LogLevel: "info",
 	}
 }
 
@@ -80,6 +85,30 @@ func Load(filename string) (Config, error) {
 			cfg.DataDir = value
 		case "paths.downloads":
 			cfg.DownloadsDir = value
+		case "downloads.max_concurrent":
+			n, err := strconv.Atoi(value)
+			if err != nil || n < 1 || n > 64 {
+				return cfg, fmt.Errorf("%s:%d: downloads.max_concurrent muss zwischen 1 und 64 liegen", filename, lineNo)
+			}
+			cfg.MaxConcurrent = n
+		case "downloads.resume_on_start":
+			b, err := strconv.ParseBool(value)
+			if err != nil {
+				return cfg, fmt.Errorf("%s:%d: ungültiger downloads.resume_on_start", filename, lineNo)
+			}
+			cfg.ResumeOnStart = b
+		case "downloads.delete_file_on_remove":
+			b, err := strconv.ParseBool(value)
+			if err != nil {
+				return cfg, fmt.Errorf("%s:%d: ungültiger downloads.delete_file_on_remove", filename, lineNo)
+			}
+			cfg.DeleteFileOnRemove = b
+		case "logging.level":
+			level := strings.ToLower(value)
+			if level != "debug" && level != "info" && level != "warn" && level != "error" {
+				return cfg, fmt.Errorf("%s:%d: logging.level muss debug, info, warn oder error sein", filename, lineNo)
+			}
+			cfg.LogLevel = level
 		default:
 			return cfg, fmt.Errorf("%s:%d: unbekannte Einstellung %s.%s", filename, lineNo, section, key)
 		}
@@ -96,7 +125,7 @@ func Load(filename string) (Config, error) {
 	return cfg, nil
 }
 func DefaultYAML(c Config) string {
-	return fmt.Sprintf("# Veltrio configuration\n# Command-line options override these values.\n\nserver:\n  host: %q\n  port: %d\n\npaths:\n  data: %q\n  downloads: %q\n", c.Host, c.Port, c.DataDir, c.DownloadsDir)
+	return fmt.Sprintf("# Veltrio configuration\n# Command-line options override these values.\n\nserver:\n  host: %q\n  port: %d\n\npaths:\n  data: %q\n  downloads: %q\n\ndownloads:\n  max_concurrent: %d\n  resume_on_start: %t\n  delete_file_on_remove: %t\n\nlogging:\n  level: %q\n", c.Host, c.Port, c.DataDir, c.DownloadsDir, c.MaxConcurrent, c.ResumeOnStart, c.DeleteFileOnRemove, c.LogLevel)
 }
 func ExpandPath(p string) string {
 	p = os.ExpandEnv(p)

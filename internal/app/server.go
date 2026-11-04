@@ -13,19 +13,23 @@ import (
 )
 
 type Server struct {
-	manager *Manager
-	assets  fs.FS
-	version string
-	mux     *http.ServeMux
+	manager     *Manager
+	assets      fs.FS
+	version     string
+	downloadDir string
+	mux         *http.ServeMux
 }
 
 func New(stateFile, downloadDir, version string) (*Server, error) {
+	return NewWithConfig(stateFile, downloadDir, version, 3, true, true)
+}
+func NewWithConfig(stateFile, downloadDir, version string, maxConcurrent int, resumeOnStart, deleteFileOnRemove bool) (*Server, error) {
 	assets := webassets.FS()
-	m, err := NewManager(stateFile, downloadDir)
+	m, err := NewManagerWithOptions(stateFile, downloadDir, maxConcurrent, resumeOnStart, deleteFileOnRemove)
 	if err != nil {
 		return nil, err
 	}
-	s := &Server{manager: m, assets: assets, mux: http.NewServeMux(), version: version}
+	s := &Server{manager: m, assets: assets, mux: http.NewServeMux(), version: version, downloadDir: downloadDir}
 	s.routes()
 	return s, nil
 }
@@ -34,6 +38,9 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("/api/downloads", s.downloads)
 	s.mux.HandleFunc("/api/downloads/", s.downloadAction)
 	s.mux.HandleFunc("/api/version", s.versionStatus)
+	s.mux.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, map[string]any{"status": "ok", "downloadDir": s.downloadDir})
+	})
 	s.mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]string{"status": "ok", "name": "Veltrio"})
 	})
