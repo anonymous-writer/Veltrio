@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
@@ -337,4 +338,38 @@ func (m *Manager) fail(id string, err error) {
 		j.item.Speed = 0
 	}
 	m.persistLocked()
+}
+
+// ServeCompletedFile serves a finished download as an attachment.
+func (m *Manager) ServeCompletedFile(w http.ResponseWriter, r *http.Request, id string) {
+	m.mu.Lock()
+	j := m.jobs[id]
+	if j == nil || j.item.Status != "completed" {
+		m.mu.Unlock()
+		http.Error(w, "Download ist noch nicht abgeschlossen oder existiert nicht", http.StatusConflict)
+		return
+	}
+	name := filepath.Base(j.item.Filename)
+	fullPath := filepath.Join(m.dir, name)
+	m.mu.Unlock()
+
+	f, err := os.Open(fullPath)
+	if err != nil {
+		http.Error(w, "Datei nicht gefunden", http.StatusNotFound)
+		return
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil || !info.Mode().IsRegular() {
+		http.Error(w, "Datei nicht verfügbar", http.StatusNotFound)
+		return
+	}
+	contentType := mime.TypeByExtension(filepath.Ext(name))
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": name}))
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", info.Size()))
+	http.ServeContent(w, r, name, info.ModTime(), f)
 }

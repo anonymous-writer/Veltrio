@@ -210,6 +210,10 @@ func (s *Server) downloadAction(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(204)
 		return
 	}
+	if r.Method == http.MethodGet && len(parts) == 2 && parts[1] == "file" {
+		s.manager.ServeCompletedFile(w, r, parts[0])
+		return
+	}
 	if r.Method == http.MethodPost && len(parts) == 2 {
 		var err error
 		switch parts[1] {
