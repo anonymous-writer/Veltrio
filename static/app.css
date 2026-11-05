@@ -198,3 +198,34 @@ body[data-theme="light"] .sidebar .side-note{color:#60748f !important}
     .sidebar .nav{padding:9px 11px;font-size:13px}
     main{padding:22px 14px 18px}
 }
+
+
+/* Compact status area: keep technical indicators visually secondary. */
+.system{
+    font-size:11px;
+    padding:7px 12px;
+    gap:12px;
+}
+.system-clock{
+    font-size:10px;
+}
+.system-wrap{
+    max-width:520px;
+}
+.language-picker{
+    font-size:10px;
+    gap:6px;
+    margin-top:5px;
+}
+.storage-path{
+    font-size:10px;
+    margin-top:5px;
+}
+.config-lights{
+    gap:4px;
+    margin-top:6px;
+}
+.config-light{
+    font-size:9px;
+    padding:4px 7px;
+}
