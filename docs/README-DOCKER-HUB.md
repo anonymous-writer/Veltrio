@@ -2,6 +2,8 @@
 
 Veltrio is a lightweight, self-hosted download manager for HTTP and HTTPS downloads. This image runs the Veltrio web application in a container and stores configuration, download state, and downloaded files in persistent mounted directories.
 
+![Veltrio web interface](https://raw.githubusercontent.com/anonymous-writer/Veltrio/main/docs/screenshot1.png)
+
 ## Quick start
 
 Replace `DOCKERHUB_NAMESPACE` with the Docker Hub username or organization that publishes the image.
