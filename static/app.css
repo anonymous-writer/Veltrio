@@ -674,7 +674,7 @@ main > header > .system-wrap{
    The redundant Downloads tab is removed; the page title remains below. */
 .sidebar{
     display:grid !important;
-    grid-template-columns:minmax(190px, 1fr) minmax(480px, 560px) !important;
+    grid-template-columns: minmax(400px, 1fr) minmax(480px, 560px) !important;
     grid-template-rows:1fr !important;
     align-items:center !important;
     justify-content:space-between !important;
@@ -832,4 +832,42 @@ main > header > .system-wrap{
         justify-content:flex-start !important;
     }
     main{padding:24px 16px 20px !important}
+}
+
+
+/* Final logo sizing: allocate a full-width grid track and preserve the SVG ratio. */
+@media (min-width: 1051px) {
+    .sidebar {
+        grid-template-columns: minmax(400px, 1fr) minmax(480px, 560px) !important;
+        column-gap: 32px !important;
+    }
+    .sidebar > .logo {
+        display: block !important;
+        width: 400px !important;
+        max-width: 400px !important;
+        height: auto !important;
+        object-fit: contain !important;
+        object-position: left center !important;
+        justify-self: start !important;
+        align-self: center !important;
+    }
+}
+@media (min-width: 761px) and (max-width: 1050px) {
+    .sidebar {
+        grid-template-columns: minmax(300px, 1fr) minmax(360px, 1.5fr) !important;
+    }
+    .sidebar > .logo {
+        width: 300px !important;
+        max-width: 100% !important;
+        height: auto !important;
+        object-fit: contain !important;
+    }
+}
+@media (max-width: 760px) {
+    .sidebar > .logo {
+        width: 260px !important;
+        max-width: 100% !important;
+        height: auto !important;
+        object-fit: contain !important;
+    }
 }
