@@ -348,3 +348,80 @@ header{
         justify-content:flex-start !important;
     }
 }
+
+
+/* Veltrio status block: compact right-aligned four-row layout (v3). */
+@media (min-width: 851px) {
+  main > header {
+    align-items: flex-start !important;
+  }
+  main > header > .system-wrap {
+    display: flex !important;
+    flex: 0 1 440px !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 440px !important;
+    max-width: 440px !important;
+    min-width: 0 !important;
+    margin: 0 0 0 auto !important;
+    text-align: right !important;
+    gap: 0 !important;
+  }
+  main > header > .system-wrap > .system {
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 6px 10px !important;
+    gap: 8px !important;
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+  }
+  main > header > .system-wrap .system-label,
+  main > header > .system-wrap .system-clock,
+  main > header > .system-wrap .system-clock *,
+  main > header > .system-wrap .language-picker,
+  main > header > .system-wrap .language-picker *,
+  main > header > .system-wrap .storage-path,
+  main > header > .system-wrap .storage-path *,
+  main > header > .system-wrap .config-light {
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+  }
+  main > header > .system-wrap > .language-picker {
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    gap: 5px !important;
+    margin-top: 5px !important;
+  }
+  main > header > .system-wrap .language-picker select,
+  main > header > .system-wrap .language-picker button {
+    padding: 4px 7px !important;
+  }
+  main > header > .system-wrap > .storage-path {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: 5px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  main > header > .system-wrap > .config-lights {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-end !important;
+    gap: 4px !important;
+    width: 100% !important;
+    margin-top: 6px !important;
+    overflow-x: auto !important;
+  }
+  main > header > .system-wrap .config-light {
+    flex: 0 0 auto !important;
+    padding: 3px 6px !important;
+    font-size: 8px !important;
+  }
+}
