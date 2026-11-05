@@ -871,3 +871,28 @@ main > header > .system-wrap{
         object-fit: contain !important;
     }
 }
+
+
+/* Use the supplied Veltrio symbol, sized to the status block height. */
+@media (min-width: 761px) {
+    .sidebar > .logo {
+        display: block !important;
+        width: auto !important;
+        height: 100px !important;
+        max-width: none !important;
+        object-fit: contain !important;
+        object-position: left center !important;
+        justify-self: start !important;
+        align-self: center !important;
+    }
+}
+@media (max-width: 760px) {
+    .sidebar > .logo {
+        display: block !important;
+        width: auto !important;
+        height: 72px !important;
+        max-width: 100% !important;
+        object-fit: contain !important;
+        object-position: left center !important;
+    }
+}
