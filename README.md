@@ -16,6 +16,8 @@ Veltrio is a lightweight, self-hosted download manager for Linux, built with Go 
 
 > Current scope: Veltrio supports HTTP and HTTPS. FTP, BitTorrent, browser extensions, and parallel segmented downloads are not currently implemented.
 
+![Screenshot](https://raw.githubusercontent.com/anonymous-writer/Veltrio/main/docs/screenshot1.png)
+
 ## Quick start
 
 Download the appropriate Linux binary or release archive from the [GitHub Releases](https://github.com/anonymous-writer/Veltrio/releases) page.
