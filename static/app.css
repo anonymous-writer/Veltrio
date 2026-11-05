@@ -229,3 +229,67 @@ body[data-theme="light"] .sidebar .side-note{color:#60748f !important}
     font-size:9px;
     padding:4px 7px;
 }
+
+
+/* Final compact status-bar sizing. These rules intentionally override
+   earlier desktop and responsive defaults. */
+.system-wrap{
+    max-width:520px;
+}
+.system{
+    font-size:9px;
+    padding:6px 10px;
+    gap:8px;
+    min-width:0;
+}
+.system-clock{
+    font-size:9px;
+}
+.language-picker{
+    font-size:9px;
+    gap:5px;
+    margin-top:4px;
+}
+.language-picker select,
+.language-picker .theme-toggle{
+    font-size:9px;
+    padding:4px 7px;
+}
+.storage-path{
+    font-size:9px;
+    margin-top:4px;
+}
+.config-lights{
+    gap:3px;
+    margin-top:5px;
+    padding-bottom:1px;
+}
+.config-light{
+    font-size:8px;
+    padding:3px 6px;
+    gap:4px;
+}
+.config-light i{
+    width:6px;
+    height:6px;
+}
+@media(max-width:850px){
+    .system-wrap{
+        max-width:100%;
+    }
+    .system{
+        font-size:9px;
+        padding:6px 10px;
+        gap:8px;
+    }
+    .system-clock,
+    .language-picker,
+    .language-picker select,
+    .language-picker .theme-toggle,
+    .storage-path{
+        font-size:9px;
+    }
+    .config-light{
+        font-size:8px;
+    }
+}
