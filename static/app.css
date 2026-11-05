@@ -896,3 +896,77 @@ main > header > .system-wrap{
         object-position: left center !important;
     }
 }
+
+
+/* Brand lockup: supplied symbol with the Veltrio project name beside it. */
+.sidebar > .brand{
+    grid-column:1 !important;
+    grid-row:1 !important;
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    justify-self:start !important;
+    gap:16px !important;
+    width:100% !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    margin:0 !important;
+}
+.sidebar > .brand > .logo{
+    display:block !important;
+    flex:0 0 auto !important;
+    width:82px !important;
+    height:82px !important;
+    max-width:none !important;
+    object-fit:contain !important;
+    object-position:center !important;
+    margin:0 !important;
+}
+.sidebar > .brand > .brand-copy{
+    display:flex !important;
+    flex:0 1 auto !important;
+    min-width:0 !important;
+    flex-direction:column !important;
+    justify-content:center !important;
+    text-align:left !important;
+    gap:3px !important;
+}
+.sidebar > .brand .brand-name{
+    color:var(--text, #eef4ff) !important;
+    font-size:30px !important;
+    font-weight:750 !important;
+    line-height:1.05 !important;
+    letter-spacing:-0.6px !important;
+    white-space:nowrap !important;
+}
+.sidebar > .brand .brand-subtitle{
+    color:var(--muted, #91a6c2) !important;
+    font-size:11px !important;
+    font-weight:500 !important;
+    line-height:1.25 !important;
+    letter-spacing:.2px !important;
+    white-space:nowrap !important;
+}
+@media(max-width:1050px){
+    .sidebar > .brand > .logo{
+        width:72px !important;
+        height:72px !important;
+    }
+    .sidebar > .brand .brand-name{
+        font-size:26px !important;
+    }
+}
+@media(max-width:760px){
+    .sidebar > .brand{
+        grid-column:1 !important;
+        grid-row:1 !important;
+        width:auto !important;
+    }
+    .sidebar > .brand > .logo{
+        width:64px !important;
+        height:64px !important;
+    }
+    .sidebar > .brand .brand-name{
+        font-size:24px !important;
+    }
+}
