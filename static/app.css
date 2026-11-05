@@ -231,65 +231,86 @@ body[data-theme="light"] .sidebar .side-note{color:#60748f !important}
 }
 
 
-/* Final compact status-bar sizing. These rules intentionally override
-   earlier desktop and responsive defaults. */
+/* Veltrio compact status area — explicit overrides for nested elements. */
 .system-wrap{
-    max-width:520px;
+    width:min(100%, 440px) !important;
+    max-width:440px !important;
+    margin-left:auto !important;
 }
 .system{
-    font-size:9px;
-    padding:6px 10px;
-    gap:8px;
-    min-width:0;
+    box-sizing:border-box !important;
+    min-width:0 !important;
+    width:100% !important;
+    gap:7px !important;
+    padding:5px 9px !important;
+    font-size:9px !important;
+    line-height:1.2 !important;
+}
+.system-label,
+.system-clock,
+.system-clock time,
+.system-time,
+.system-time time{
+    font-size:9px !important;
+    line-height:1.2 !important;
+}
+.system-label{
+    gap:5px !important;
 }
 .system-clock{
-    font-size:9px;
+    white-space:nowrap !important;
 }
 .language-picker{
-    font-size:9px;
-    gap:5px;
-    margin-top:4px;
+    gap:5px !important;
+    margin-top:4px !important;
+    font-size:9px !important;
+    line-height:1.2 !important;
+}
+.language-picker label,
+.language-picker select,
+.language-picker button,
+.language-picker .theme-toggle,
+.theme-toggle{
+    font-size:9px !important;
+    line-height:1.2 !important;
 }
 .language-picker select,
-.language-picker .theme-toggle{
-    font-size:9px;
-    padding:4px 7px;
+.language-picker button,
+.language-picker .theme-toggle,
+.theme-toggle{
+    padding:4px 7px !important;
 }
 .storage-path{
-    font-size:9px;
-    margin-top:4px;
+    margin-top:4px !important;
+    font-size:9px !important;
+    line-height:1.2 !important;
+}
+.storage-path code{
+    font-size:9px !important;
 }
 .config-lights{
-    gap:3px;
-    margin-top:5px;
-    padding-bottom:1px;
+    gap:3px !important;
+    margin-top:4px !important;
+    padding-bottom:0 !important;
 }
 .config-light{
-    font-size:8px;
-    padding:3px 6px;
-    gap:4px;
+    gap:4px !important;
+    padding:3px 5px !important;
+    font-size:8px !important;
+    line-height:1.2 !important;
 }
 .config-light i{
-    width:6px;
-    height:6px;
+    width:6px !important;
+    height:6px !important;
+    flex:0 0 6px !important;
 }
 @media(max-width:850px){
     .system-wrap{
-        max-width:100%;
+        width:100% !important;
+        max-width:100% !important;
     }
     .system{
-        font-size:9px;
-        padding:6px 10px;
-        gap:8px;
-    }
-    .system-clock,
-    .language-picker,
-    .language-picker select,
-    .language-picker .theme-toggle,
-    .storage-path{
-        font-size:9px;
-    }
-    .config-light{
-        font-size:8px;
+        width:100% !important;
+        min-width:0 !important;
     }
 }
