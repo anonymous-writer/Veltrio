@@ -350,78 +350,139 @@ header{
 }
 
 
-/* Veltrio status block: compact right-aligned four-row layout (v3). */
-@media (min-width: 851px) {
-  main > header {
-    align-items: flex-start !important;
-  }
-  main > header > .system-wrap {
-    display: flex !important;
-    flex: 0 1 440px !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    width: 440px !important;
-    max-width: 440px !important;
-    min-width: 0 !important;
-    margin: 0 0 0 auto !important;
-    text-align: right !important;
-    gap: 0 !important;
-  }
-  main > header > .system-wrap > .system {
-    width: 100% !important;
-    min-width: 0 !important;
-    box-sizing: border-box !important;
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 6px 10px !important;
-    gap: 8px !important;
-    font-size: 9px !important;
-    line-height: 1.2 !important;
-  }
-  main > header > .system-wrap .system-label,
-  main > header > .system-wrap .system-clock,
-  main > header > .system-wrap .system-clock *,
-  main > header > .system-wrap .language-picker,
-  main > header > .system-wrap .language-picker *,
-  main > header > .system-wrap .storage-path,
-  main > header > .system-wrap .storage-path *,
-  main > header > .system-wrap .config-light {
-    font-size: 9px !important;
-    line-height: 1.2 !important;
-  }
-  main > header > .system-wrap > .language-picker {
-    display: flex !important;
-    justify-content: flex-end !important;
-    align-items: center !important;
-    gap: 5px !important;
-    margin-top: 5px !important;
-  }
-  main > header > .system-wrap .language-picker select,
-  main > header > .system-wrap .language-picker button {
-    padding: 4px 7px !important;
-  }
-  main > header > .system-wrap > .storage-path {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin-top: 5px !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-  }
-  main > header > .system-wrap > .config-lights {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    justify-content: flex-end !important;
-    gap: 4px !important;
-    width: 100% !important;
-    margin-top: 6px !important;
-    overflow-x: auto !important;
-  }
-  main > header > .system-wrap .config-light {
-    flex: 0 0 auto !important;
-    padding: 3px 6px !important;
-    font-size: 8px !important;
-  }
+/* Put the compact system/status controls into the top navigation bar. */
+.sidebar{
+    min-height:116px !important;
+    height:auto !important;
+    padding:12px 28px !important;
+    gap:22px !important;
+    align-items:center !important;
+    flex-wrap:nowrap !important;
+    overflow:visible !important;
+}
+.sidebar .logo{
+    width:105px !important;
+    max-width:15vw !important;
+    margin:0 4px 0 0 !important;
+}
+.sidebar .nav{
+    flex:0 0 auto !important;
+    min-width:135px !important;
+    padding:11px 16px !important;
+}
+.sidebar > .system-wrap{
+    display:flex !important;
+    flex:0 1 470px !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    width:470px !important;
+    max-width:470px !important;
+    min-width:330px !important;
+    margin:0 0 0 auto !important;
+    text-align:right !important;
+    gap:0 !important;
+}
+.sidebar > .system-wrap > .system{
+    display:flex !important;
+    width:100% !important;
+    min-width:0 !important;
+    box-sizing:border-box !important;
+    flex-wrap:nowrap !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    padding:5px 9px !important;
+    gap:8px !important;
+    font-size:9px !important;
+    line-height:1.2 !important;
+}
+.sidebar > .system-wrap .system-label,
+.sidebar > .system-wrap .system-clock,
+.sidebar > .system-wrap .system-clock *{
+    font-size:9px !important;
+    line-height:1.2 !important;
+    white-space:nowrap !important;
+}
+.sidebar > .system-wrap > .language-picker{
+    display:flex !important;
+    justify-content:flex-end !important;
+    align-items:center !important;
+    gap:5px !important;
+    margin-top:4px !important;
+    font-size:9px !important;
+}
+.sidebar > .system-wrap .language-picker label,
+.sidebar > .system-wrap .language-picker select,
+.sidebar > .system-wrap .language-picker button{
+    font-size:9px !important;
+    line-height:1.2 !important;
+}
+.sidebar > .system-wrap .language-picker select,
+.sidebar > .system-wrap .language-picker button{
+    padding:3px 7px !important;
+}
+.sidebar > .system-wrap > .storage-path{
+    width:100% !important;
+    max-width:100% !important;
+    margin-top:4px !important;
+    font-size:9px !important;
+    line-height:1.2 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+}
+.sidebar > .system-wrap .storage-path code{
+    font-size:9px !important;
+}
+.sidebar > .system-wrap > .config-lights{
+    display:flex !important;
+    flex-wrap:nowrap !important;
+    justify-content:flex-end !important;
+    gap:4px !important;
+    width:100% !important;
+    margin-top:5px !important;
+    padding:0 !important;
+    overflow-x:auto !important;
+}
+.sidebar > .system-wrap .config-light{
+    flex:0 0 auto !important;
+    padding:3px 5px !important;
+    font-size:8px !important;
+    line-height:1.2 !important;
+}
+.sidebar > .side-note{
+    display:none !important;
+}
+main > header{
+    align-items:flex-start !important;
+}
+main > header > .system-wrap{
+    display:none !important;
+}
+@media(max-width:1100px){
+    .sidebar{
+        flex-wrap:wrap !important;
+        min-height:0 !important;
+        justify-content:space-between !important;
+    }
+    .sidebar > .system-wrap{
+        order:3 !important;
+        flex:1 1 100% !important;
+        width:100% !important;
+        max-width:100% !important;
+        min-width:0 !important;
+        margin:8px 0 0 !important;
+    }
+}
+@media(max-width:850px){
+    .sidebar{
+        display:flex !important;
+        min-height:0 !important;
+        padding:12px 18px !important;
+    }
+    .sidebar > .system-wrap{
+        display:flex !important;
+    }
+    .sidebar > .system-wrap > .system{
+        display:flex !important;
+    }
 }
