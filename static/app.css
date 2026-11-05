@@ -231,86 +231,120 @@ body[data-theme="light"] .sidebar .side-note{color:#60748f !important}
 }
 
 
-/* Veltrio compact status area — explicit overrides for nested elements. */
+/* Reference layout: compact, right-aligned status block in four rows. */
+header{
+    align-items:flex-start !important;
+}
 .system-wrap{
-    width:min(100%, 440px) !important;
+    display:flex !important;
+    flex:0 0 440px !important;
+    flex-direction:column !important;
+    align-items:stretch !important;
+    width:440px !important;
     max-width:440px !important;
-    margin-left:auto !important;
-}
-.system{
-    box-sizing:border-box !important;
     min-width:0 !important;
+    margin:0 0 0 auto !important;
+    text-align:right !important;
+    gap:0 !important;
+}
+.system-wrap > .system{
+    display:flex !important;
+    flex:0 0 auto !important;
     width:100% !important;
-    gap:7px !important;
-    padding:5px 9px !important;
+    min-width:0 !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+    flex-wrap:nowrap !important;
+    gap:8px !important;
+    padding:6px 10px !important;
     font-size:9px !important;
     line-height:1.2 !important;
 }
-.system-label,
-.system-clock,
-.system-clock time,
-.system-time,
-.system-time time{
+.system-wrap .system-label,
+.system-wrap .system-clock,
+.system-wrap .system-clock time{
     font-size:9px !important;
     line-height:1.2 !important;
-}
-.system-label{
-    gap:5px !important;
-}
-.system-clock{
     white-space:nowrap !important;
 }
-.language-picker{
+.system-wrap > .language-picker{
+    display:flex !important;
+    flex:0 0 auto !important;
+    justify-content:flex-end !important;
+    align-items:center !important;
     gap:5px !important;
-    margin-top:4px !important;
+    margin-top:5px !important;
     font-size:9px !important;
     line-height:1.2 !important;
 }
-.language-picker label,
-.language-picker select,
-.language-picker button,
-.language-picker .theme-toggle,
-.theme-toggle{
+.system-wrap .language-picker label,
+.system-wrap .language-picker select,
+.system-wrap .language-picker button,
+.system-wrap .language-picker .theme-toggle{
     font-size:9px !important;
     line-height:1.2 !important;
 }
-.language-picker select,
-.language-picker button,
-.language-picker .theme-toggle,
-.theme-toggle{
+.system-wrap .language-picker select,
+.system-wrap .language-picker button,
+.system-wrap .language-picker .theme-toggle{
     padding:4px 7px !important;
 }
-.storage-path{
-    margin-top:4px !important;
+.system-wrap > .storage-path{
+    display:block !important;
+    flex:0 0 auto !important;
+    width:100% !important;
+    max-width:100% !important;
+    box-sizing:border-box !important;
+    margin-top:5px !important;
     font-size:9px !important;
     line-height:1.2 !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
 }
-.storage-path code{
+.system-wrap .storage-path code{
     font-size:9px !important;
 }
-.config-lights{
-    gap:3px !important;
-    margin-top:4px !important;
-    padding-bottom:0 !important;
-}
-.config-light{
+.system-wrap > .config-lights{
+    display:flex !important;
+    flex:0 0 auto !important;
+    flex-direction:row !important;
+    flex-wrap:nowrap !important;
+    justify-content:flex-end !important;
+    align-items:center !important;
     gap:4px !important;
-    padding:3px 5px !important;
+    width:100% !important;
+    max-width:100% !important;
+    margin-top:6px !important;
+    padding:0 !important;
+    overflow-x:auto !important;
+    white-space:nowrap !important;
+}
+.system-wrap .config-light{
+    flex:0 0 auto !important;
+    gap:4px !important;
+    padding:3px 6px !important;
     font-size:8px !important;
     line-height:1.2 !important;
 }
-.config-light i{
+.system-wrap .config-light i{
     width:6px !important;
     height:6px !important;
     flex:0 0 6px !important;
 }
 @media(max-width:850px){
+    header{
+        align-items:stretch !important;
+    }
     .system-wrap{
+        flex:1 1 100% !important;
         width:100% !important;
         max-width:100% !important;
+        margin:16px 0 0 !important;
     }
-    .system{
-        width:100% !important;
-        min-width:0 !important;
+    .system-wrap > .config-lights{
+        justify-content:flex-start !important;
     }
 }
