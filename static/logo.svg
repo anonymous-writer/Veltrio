@@ -18,12 +18,6 @@
     <path d="M51 105 L76 135 L101 105 L101 152 L76 181 L51 152 Z" fill="#0872f4"/>
     <path d="M10 185 L51 185 L51 250 L10 250 Z" fill="#1559ef"/>
     <path d="M101 185 L142 185 L142 250 L101 250 Z" fill="#1559ef"/>
-    <!-- Pencil/edit mark -->
-    <g transform="translate(78 175) rotate(43)">
-      <rect x="0" y="0" width="23" height="78" rx="2" fill="#0b55e8" stroke="#071f67" stroke-width="3"/>
-      <rect x="4" y="4" width="15" height="52" fill="url(#cyan)"/>
-      <path d="M0 78 L11.5 99 L23 78 Z" fill="#f6fbff" stroke="#0b55e8" stroke-width="3"/>
-    </g>
   </g>
   <text x="195" y="143" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="94" font-weight="750" letter-spacing="-3">
     <tspan fill="#f1f6ff">Vel</tspan><tspan fill="#4b9dff">trio</tspan>

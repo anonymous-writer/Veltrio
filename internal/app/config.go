@@ -10,10 +10,22 @@ import (
 )
 
 type Config struct {
-	Host         string
-	Port         int
-	DataDir      string
-	DownloadsDir string
+	Host                  string
+	Port                  int
+	DataDir               string
+	DownloadsDir          string
+	MaxConcurrent         int
+	ResumeOnStart         bool
+	DeleteFileOnRemove    bool
+	LogLevel              string
+	NtfyEnabled           bool
+	NtfyDebug             bool
+	DatabaseDebug         bool
+	NtfyURL               string
+	NtfyToken             string
+	NtfyNotifyUnknownIPv4 bool
+	NtfyPriority          string
+	NtfyTimeoutSeconds    int
 }
 
 func Defaults() Config {
@@ -22,10 +34,12 @@ func Defaults() Config {
 		home = "."
 	}
 	return Config{
-		Host:         "0.0.0.0",
-		Port:         3010,
-		DataDir:      filepath.Join(home, ".local", "share", "veltrio"),
-		DownloadsDir: filepath.Join(home, "Downloads", "Veltrio"),
+		Host:          "0.0.0.0",
+		Port:          3010,
+		DataDir:       filepath.Join(home, ".local", "share", "veltrio"),
+		DownloadsDir:  filepath.Join(home, "Downloads", "Veltrio"),
+		MaxConcurrent: 3, ResumeOnStart: true, DeleteFileOnRemove: true, LogLevel: "info",
+		NtfyEnabled: false, NtfyDebug: false, DatabaseDebug: false, NtfyPriority: "high", NtfyTimeoutSeconds: 10,
 	}
 }
 
@@ -68,6 +82,41 @@ func Load(filename string) (Config, error) {
 		}
 		value = unquote(value)
 		switch section + "." + key {
+		case ".ntfy_enabled", "ntfy_enabled", "logging.ntfy_enabled", "downloads.ntfy_enabled", "paths.ntfy_enabled", "server.ntfy_enabled":
+			cfg.NtfyEnabled, err = strconv.ParseBool(value)
+			if err != nil {
+				return cfg, fmt.Errorf("%s:%d: ungültiger ntfy_enabled", filename, lineNo)
+			}
+		case ".ntfy_debug", "ntfy_debug", "logging.ntfy_debug", "downloads.ntfy_debug", "paths.ntfy_debug", "server.ntfy_debug":
+			cfg.NtfyDebug, err = strconv.ParseBool(value)
+			if err != nil {
+				return cfg, fmt.Errorf("%s:%d: ungültiger ntfy_debug", filename, lineNo)
+			}
+		case ".database_debug", "database_debug", "logging.database_debug", "downloads.database_debug", "paths.database_debug", "server.database_debug":
+			cfg.DatabaseDebug, err = strconv.ParseBool(value)
+			if err != nil {
+				return cfg, fmt.Errorf("%s:%d: ungültiger database_debug", filename, lineNo)
+			}
+		case ".ntfy_url", "ntfy_url", "logging.ntfy_url", "downloads.ntfy_url", "paths.ntfy_url", "server.ntfy_url":
+			cfg.NtfyURL = value
+		case ".ntfy_token", "ntfy_token", "logging.ntfy_token", "downloads.ntfy_token", "paths.ntfy_token", "server.ntfy_token":
+			cfg.NtfyToken = value
+		case ".ntfy_notify_unknown_ipv4", "ntfy_notify_unknown_ipv4", "logging.ntfy_notify_unknown_ipv4", "downloads.ntfy_notify_unknown_ipv4", "paths.ntfy_notify_unknown_ipv4", "server.ntfy_notify_unknown_ipv4":
+			cfg.NtfyNotifyUnknownIPv4, err = strconv.ParseBool(value)
+			if err != nil {
+				return cfg, fmt.Errorf("%s:%d: ungültiger ntfy_notify_unknown_ipv4", filename, lineNo)
+			}
+		case ".ntfy_priority", "ntfy_priority", "logging.ntfy_priority", "downloads.ntfy_priority", "paths.ntfy_priority", "server.ntfy_priority":
+			if value != "min" && value != "low" && value != "default" && value != "high" && value != "urgent" {
+				return cfg, fmt.Errorf("%s:%d: ntfy_priority muss min, low, default, high oder urgent sein", filename, lineNo)
+			}
+			cfg.NtfyPriority = value
+		case ".ntfy_timeout_seconds", "ntfy_timeout_seconds", "logging.ntfy_timeout_seconds", "downloads.ntfy_timeout_seconds", "paths.ntfy_timeout_seconds", "server.ntfy_timeout_seconds":
+			n, e := strconv.Atoi(value)
+			if e != nil || n < 1 || n > 120 {
+				return cfg, fmt.Errorf("%s:%d: ntfy_timeout_seconds muss zwischen 1 und 120 liegen", filename, lineNo)
+			}
+			cfg.NtfyTimeoutSeconds = n
 		case "server.host":
 			cfg.Host = value
 		case "server.port":
@@ -80,6 +129,30 @@ func Load(filename string) (Config, error) {
 			cfg.DataDir = value
 		case "paths.downloads":
 			cfg.DownloadsDir = value
+		case "downloads.max_concurrent":
+			n, err := strconv.Atoi(value)
+			if err != nil || n < 1 || n > 64 {
+				return cfg, fmt.Errorf("%s:%d: downloads.max_concurrent muss zwischen 1 und 64 liegen", filename, lineNo)
+			}
+			cfg.MaxConcurrent = n
+		case "downloads.resume_on_start":
+			b, err := strconv.ParseBool(value)
+			if err != nil {
+				return cfg, fmt.Errorf("%s:%d: ungültiger downloads.resume_on_start", filename, lineNo)
+			}
+			cfg.ResumeOnStart = b
+		case "downloads.delete_file_on_remove":
+			b, err := strconv.ParseBool(value)
+			if err != nil {
+				return cfg, fmt.Errorf("%s:%d: ungültiger downloads.delete_file_on_remove", filename, lineNo)
+			}
+			cfg.DeleteFileOnRemove = b
+		case "logging.level":
+			level := strings.ToLower(value)
+			if level != "debug" && level != "info" && level != "warn" && level != "error" {
+				return cfg, fmt.Errorf("%s:%d: logging.level muss debug, info, warn oder error sein", filename, lineNo)
+			}
+			cfg.LogLevel = level
 		default:
 			return cfg, fmt.Errorf("%s:%d: unbekannte Einstellung %s.%s", filename, lineNo, section, key)
 		}
@@ -96,7 +169,35 @@ func Load(filename string) (Config, error) {
 	return cfg, nil
 }
 func DefaultYAML(c Config) string {
-	return fmt.Sprintf("# Veltrio configuration\n# Command-line options override these values.\n\nserver:\n  host: %q\n  port: %d\n\npaths:\n  data: %q\n  downloads: %q\n", c.Host, c.Port, c.DataDir, c.DownloadsDir)
+	return fmt.Sprintf(`# Veltrio configuration
+# Command-line options override these values.
+
+server:
+  host: %q
+  port: %d
+
+paths:
+  data: %q
+  downloads: %q
+
+downloads:
+  max_concurrent: %d
+  resume_on_start: %t
+  delete_file_on_remove: %t
+
+logging:
+  level: %q
+
+# NTFY Push notifications
+ntfy_enabled: %t
+ntfy_debug: %t
+database_debug: %t
+ntfy_url: %q
+ntfy_token: %q
+ntfy_notify_unknown_ipv4: %t
+ntfy_priority: %q
+ntfy_timeout_seconds: %d
+`, c.Host, c.Port, c.DataDir, c.DownloadsDir, c.MaxConcurrent, c.ResumeOnStart, c.DeleteFileOnRemove, c.LogLevel, c.NtfyEnabled, c.NtfyDebug, c.DatabaseDebug, c.NtfyURL, c.NtfyToken, c.NtfyNotifyUnknownIPv4, c.NtfyPriority, c.NtfyTimeoutSeconds)
 }
 func ExpandPath(p string) string {
 	p = os.ExpandEnv(p)

@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"veltrio/internal/app"
 )
@@ -88,13 +89,16 @@ func main() {
 		log.Fatalf("Download-Verzeichnis: %v", err)
 	}
 
-	app, err := app.New(filepath.Join(cfg.DataDir, "veltrio.json"), cfg.DownloadsDir, version)
+	serverApp, err := app.NewWithConfig(filepath.Join(cfg.DataDir, "veltrio.json"), cfg.DownloadsDir, version, cfg.MaxConcurrent, cfg.ResumeOnStart, cfg.DeleteFileOnRemove, cfg.LogLevel)
 	if err != nil {
 		log.Fatal(err)
 	}
+	serverApp.ConfigureNtfy(app.Ntfy{Enabled: cfg.NtfyEnabled, Debug: cfg.NtfyDebug, URL: cfg.NtfyURL, Token: cfg.NtfyToken, Priority: cfg.NtfyPriority, Timeout: time.Duration(cfg.NtfyTimeoutSeconds) * time.Second}, cfg.DatabaseDebug, cfg.NtfyNotifyUnknownIPv4)
 	addr := net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port))
-	log.Printf("Veltrio %s listening on %s (config: %s)", version, addr, *configPath)
-	log.Fatal(http.ListenAndServe(addr, app.Handler()))
+	if cfg.LogLevel == "debug" || cfg.LogLevel == "info" {
+		log.Printf("Veltrio %s listening on %s (config: %s, downloads: %s)", version, addr, *configPath, cfg.DownloadsDir)
+	}
+	log.Fatal(http.ListenAndServe(addr, serverApp.Handler()))
 }
 func configPathExpanded(p string) string { return app.ExpandPath(p) }
 func env(k, f string) string {

@@ -13,27 +13,55 @@ import (
 )
 
 type Server struct {
-	manager *Manager
-	assets  fs.FS
-	version string
-	mux     *http.ServeMux
+	manager               *Manager
+	assets                fs.FS
+	version               string
+	downloadDir           string
+	maxConcurrent         int
+	resumeOnStart         bool
+	deleteFileOnRemove    bool
+	logLevel              string
+	ntfyEnabled           bool
+	ntfyDebug             bool
+	databaseDebug         bool
+	ntfyURL               string
+	ntfyPriority          string
+	ntfyNotifyUnknownIPv4 bool
+	mux                   *http.ServeMux
 }
 
 func New(stateFile, downloadDir, version string) (*Server, error) {
+	return NewWithConfig(stateFile, downloadDir, version, 3, true, true, "info")
+}
+func NewWithConfig(stateFile, downloadDir, version string, maxConcurrent int, resumeOnStart, deleteFileOnRemove bool, logLevel string) (*Server, error) {
 	assets := webassets.FS()
-	m, err := NewManager(stateFile, downloadDir)
+	m, err := NewManagerWithOptions(stateFile, downloadDir, maxConcurrent, resumeOnStart, deleteFileOnRemove)
 	if err != nil {
 		return nil, err
 	}
-	s := &Server{manager: m, assets: assets, mux: http.NewServeMux(), version: version}
+	s := &Server{manager: m, assets: assets, mux: http.NewServeMux(), version: version, downloadDir: downloadDir, maxConcurrent: maxConcurrent, resumeOnStart: resumeOnStart, deleteFileOnRemove: deleteFileOnRemove, logLevel: logLevel}
 	s.routes()
 	return s, nil
 }
 func (s *Server) Handler() http.Handler { return s.mux }
+func (s *Server) ConfigureNtfy(n Ntfy, databaseDebug, notifyUnknownIPv4 bool) {
+	s.ntfyEnabled = n.Enabled && strings.TrimSpace(n.URL) != ""
+	s.ntfyDebug = n.Debug
+	s.databaseDebug = databaseDebug
+	s.ntfyNotifyUnknownIPv4 = notifyUnknownIPv4
+	s.ntfyURL = n.URL
+	s.ntfyPriority = n.Priority
+	if n.Enabled && strings.TrimSpace(n.URL) != "" {
+		s.manager.SetNotifier(func(title, message string) error { return n.Notify(title, message) })
+	}
+}
 func (s *Server) routes() {
 	s.mux.HandleFunc("/api/downloads", s.downloads)
 	s.mux.HandleFunc("/api/downloads/", s.downloadAction)
 	s.mux.HandleFunc("/api/version", s.versionStatus)
+	s.mux.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, map[string]any{"status": "ok", "serverTime": time.Now().Format(time.RFC3339), "downloadDir": s.downloadDir, "maxConcurrent": s.maxConcurrent, "resumeOnStart": s.resumeOnStart, "deleteFileOnRemove": s.deleteFileOnRemove, "logLevel": s.logLevel, "ntfyEnabled": s.ntfyEnabled, "ntfyDebug": s.ntfyDebug, "databaseDebug": s.databaseDebug, "ntfyPriority": s.ntfyPriority, "ntfyNotifyUnknownIPv4": s.ntfyNotifyUnknownIPv4})
+	})
 	s.mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]string{"status": "ok", "name": "Veltrio"})
 	})
@@ -89,13 +117,14 @@ func (s *Server) frontend(w http.ResponseWriter, r *http.Request) {
 }
 func (s *Server) versionStatus(w http.ResponseWriter, r *http.Request) {
 	type status struct {
-		Version    string `json:"version"`
-		Channel    string `json:"channel"`
-		Repository string `json:"repository"`
-		ReleaseURL string `json:"releaseUrl,omitempty"`
-		UpdatedAt  string `json:"updatedAt,omitempty"`
-		RunURL     string `json:"runUrl,omitempty"`
-		Message    string `json:"message,omitempty"`
+		Version       string `json:"version"`
+		LatestVersion string `json:"latestVersion,omitempty"`
+		Channel       string `json:"channel"`
+		Repository    string `json:"repository"`
+		ReleaseURL    string `json:"releaseUrl,omitempty"`
+		UpdatedAt     string `json:"updatedAt,omitempty"`
+		RunURL        string `json:"runUrl,omitempty"`
+		Message       string `json:"message,omitempty"`
 	}
 	result := status{Version: s.version, Channel: "Release", Repository: "https://github.com/anonymous-writer/Veltrio"}
 	client := &http.Client{Timeout: 5 * time.Second}
@@ -118,7 +147,7 @@ func (s *Server) versionStatus(w http.ResponseWriter, r *http.Request) {
 		HTMLURL string `json:"html_url"`
 	}
 	if err := fetch("https://api.github.com/repos/anonymous-writer/Veltrio/releases/latest", &release); err == nil && release.TagName != "" {
-		result.Version = release.TagName
+		result.LatestVersion = release.TagName
 		result.ReleaseURL = release.HTMLURL
 	} else {
 		result.Message = "GitHub-Status momentan nicht verfügbar"
@@ -179,6 +208,10 @@ func (s *Server) downloadAction(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		w.WriteHeader(204)
+		return
+	}
+	if r.Method == http.MethodGet && len(parts) == 2 && parts[1] == "file" {
+		s.manager.ServeCompletedFile(w, r, parts[0])
 		return
 	}
 	if r.Method == http.MethodPost && len(parts) == 2 {

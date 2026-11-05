@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"log"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
@@ -30,14 +33,24 @@ type job struct {
 	running bool
 }
 type Manager struct {
-	mu             sync.Mutex
-	jobs           map[string]*job
-	stateFile, dir string
-	client         *http.Client
+	mu                 sync.Mutex
+	jobs               map[string]*job
+	stateFile, dir     string
+	client             *http.Client
+	deleteFileOnRemove bool
+	resumeOnStart      bool
+	notify             func(string, string) error
+	slots              chan struct{}
 }
 
 func NewManager(stateFile, dir string) (*Manager, error) {
-	m := &Manager{jobs: map[string]*job{}, stateFile: stateFile, dir: dir, client: &http.Client{Timeout: 0}}
+	return NewManagerWithOptions(stateFile, dir, 3, true, true)
+}
+func NewManagerWithOptions(stateFile, dir string, maxConcurrent int, resumeOnStart, deleteFileOnRemove bool) (*Manager, error) {
+	if maxConcurrent < 1 {
+		maxConcurrent = 1
+	}
+	m := &Manager{jobs: map[string]*job{}, stateFile: stateFile, dir: dir, client: &http.Client{Timeout: 0}, slots: make(chan struct{}, maxConcurrent), resumeOnStart: resumeOnStart, deleteFileOnRemove: deleteFileOnRemove}
 	b, err := os.ReadFile(stateFile)
 	if err == nil {
 		var items []Item
@@ -52,7 +65,31 @@ func NewManager(stateFile, dir string) (*Manager, error) {
 	} else if !os.IsNotExist(err) {
 		return nil, err
 	}
+	if m.resumeOnStart {
+		for id, j := range m.jobs {
+			if j.item.Status == "paused" || j.item.Status == "queued" {
+				go m.Resume(id)
+			}
+		}
+	}
 	return m, nil
+}
+func (m *Manager) SetNotifier(fn func(string, string) error) {
+	m.mu.Lock()
+	m.notify = fn
+	m.mu.Unlock()
+}
+func (m *Manager) notifyEvent(title, message string) {
+	m.mu.Lock()
+	fn := m.notify
+	m.mu.Unlock()
+	if fn != nil {
+		go func() {
+			if err := fn(title, message); err != nil {
+				log.Printf("ntfy: download notification failed: %v", err)
+			}
+		}()
+	}
 }
 func (m *Manager) persistLocked() {
 	items := make([]Item, 0, len(m.jobs))
@@ -147,8 +184,11 @@ func (m *Manager) Delete(id string) error {
 	delete(m.jobs, id)
 	m.persistLocked()
 	name := j.item.Filename
+	removeFile := m.deleteFileOnRemove
 	m.mu.Unlock()
-	_ = os.Remove(filepath.Join(m.dir, name))
+	if removeFile {
+		_ = os.Remove(filepath.Join(m.dir, name))
+	}
 	return nil
 }
 func (m *Manager) run(id string) {
@@ -161,7 +201,7 @@ func (m *Manager) run(id string) {
 	ctx, cancel := context.WithCancel(context.Background())
 	j.cancel = cancel
 	j.running = true
-	j.item.Status = "downloading"
+	j.item.Status = "queued"
 	j.item.Error = ""
 	item := j.item
 	m.persistLocked()
@@ -175,6 +215,18 @@ func (m *Manager) run(id string) {
 		m.persistLocked()
 		m.mu.Unlock()
 	}()
+	select {
+	case m.slots <- struct{}{}:
+		defer func() { <-m.slots }()
+	case <-ctx.Done():
+		return
+	}
+	m.mu.Lock()
+	if x := m.jobs[id]; x != nil && x.item.Status == "queued" {
+		x.item.Status = "downloading"
+		m.persistLocked()
+	}
+	m.mu.Unlock()
 
 	dest := filepath.Join(m.dir, item.Filename)
 	f, err := os.OpenFile(dest, os.O_CREATE|os.O_WRONLY, 0644)
@@ -253,13 +305,14 @@ func (m *Manager) run(id string) {
 			}
 		}
 		if readErr != nil {
-			if readErr.Error() == "EOF" {
+			if errors.Is(readErr, io.EOF) {
 				m.mu.Lock()
 				if x := m.jobs[id]; x != nil {
 					x.item.Downloaded += bytesSince
 					x.item.Speed = 0
 					if x.item.Status == "downloading" {
 						x.item.Status = "completed"
+						go m.notifyEvent("Veltrio: Download abgeschlossen", x.item.Filename)
 					}
 				}
 				m.persistLocked()
@@ -285,4 +338,38 @@ func (m *Manager) fail(id string, err error) {
 		j.item.Speed = 0
 	}
 	m.persistLocked()
+}
+
+// ServeCompletedFile serves a finished download as an attachment.
+func (m *Manager) ServeCompletedFile(w http.ResponseWriter, r *http.Request, id string) {
+	m.mu.Lock()
+	j := m.jobs[id]
+	if j == nil || j.item.Status != "completed" {
+		m.mu.Unlock()
+		http.Error(w, "Download ist noch nicht abgeschlossen oder existiert nicht", http.StatusConflict)
+		return
+	}
+	name := filepath.Base(j.item.Filename)
+	fullPath := filepath.Join(m.dir, name)
+	m.mu.Unlock()
+
+	f, err := os.Open(fullPath)
+	if err != nil {
+		http.Error(w, "Datei nicht gefunden", http.StatusNotFound)
+		return
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil || !info.Mode().IsRegular() {
+		http.Error(w, "Datei nicht verfügbar", http.StatusNotFound)
+		return
+	}
+	contentType := mime.TypeByExtension(filepath.Ext(name))
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": name}))
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", info.Size()))
+	http.ServeContent(w, r, name, info.ModTime(), f)
 }
