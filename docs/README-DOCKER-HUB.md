@@ -1,5 +1,34 @@
 # Veltrio — Docker Hub
 
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/anonymous-writer/Veltrio/main/docs/Veltrio-Icon-Set/Veltrio%20Self-Hosted%20Download%20Manager%20Banner.png"
+    alt="Veltrio Download Manager"
+    width="50%">
+</p>
+
+<p align="center">
+  <a href="https://anonymous-writer.github.io/Veltrio/">
+    <img src="https://img.shields.io/badge/Website-GitHub%20Pages-222222?logo=githubpages&logoColor=white" alt="Veltrio Website">
+  </a>
+  <a href="https://hub.docker.com/r/1968michael1968/veltrio">
+    <img src="https://img.shields.io/badge/Docker%20Hub-1968michael1968%2Fveltrio-2496ED?logo=docker&logoColor=white" alt="Veltrio on Docker Hub">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/anonymous-writer/Veltrio/pkgs/container/veltrio">
+    <img src="https://img.shields.io/badge/GHCR-docker%20image-181717?logo=github&logoColor=white" alt="GitHub Container Registry">
+  </a>
+  <a href="https://go.dev/dl/">
+    <img src="https://img.shields.io/badge/Go-1.27-00ADD8?logo=go&logoColor=white" alt="Go 1.27">
+  </a>
+  <a href="https://github.com/anonymous-writer/Veltrio/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-97CA00.svg" alt="MIT License">
+  </a>
+</p>
+
+
 Veltrio is a lightweight, self-hosted download manager for HTTP and HTTPS downloads. This image runs the Veltrio web application in a container and stores configuration, download state, and downloaded files in persistent mounted directories.
 
 ![Veltrio web interface](https://raw.githubusercontent.com/anonymous-writer/Veltrio/main/docs/screenshot1.png)
@@ -9,7 +38,7 @@ Veltrio is a lightweight, self-hosted download manager for HTTP and HTTPS downlo
 Replace `DOCKERHUB_NAMESPACE` with the Docker Hub username or organization that publishes the image.
 
 ```bash
-docker pull DOCKERHUB_NAMESPACE/veltrio:latest
+docker pull 1968michael1968/veltrio:latest
 
 mkdir -p ./veltrio-data ./veltrio-downloads
 
@@ -19,7 +48,7 @@ docker run -d \
   -p 3010:3010 \
   -v "$(pwd)/veltrio-data:/app/data" \
   -v "$(pwd)/veltrio-downloads:/app/Downloads" \
-  DOCKERHUB_NAMESPACE/veltrio:latest
+  1968michael1968/veltrio:latest
 ```
 
 Open the web interface:
@@ -142,7 +171,7 @@ Available platforms depend on the manifests actually published for the selected 
 Pull the latest published image and recreate the container:
 
 ```bash
-docker pull DOCKERHUB_NAMESPACE/veltrio:latest
+docker pull 1968michael1968/veltrio:latest
 docker stop veltrio
 docker rm veltrio
 
@@ -152,7 +181,7 @@ docker run -d \
   -p 3010:3010 \
   -v "$(pwd)/veltrio-data:/app/data" \
   -v "$(pwd)/veltrio-downloads:/app/Downloads" \
-  DOCKERHUB_NAMESPACE/veltrio:latest
+  1968michael1968/veltrio:latest
 ```
 
 Your configuration and downloads remain in the mounted host directories.
@@ -175,6 +204,12 @@ FTP, BitTorrent, browser extensions, and parallel segmented downloads are not cu
 
 ## Links
 
+- Project website: https://anonymous-writer.github.io/Veltrio/
+- Docker Hub image: https://hub.docker.com/r/1968michael1968/veltrio
+
 - Source code: https://github.com/anonymous-writer/Veltrio
 - Releases: https://github.com/anonymous-writer/Veltrio/releases
-- License: MIT
+
+## License
+
+Veltrio is distributed under the MIT License. See [LICENSE](LICENSE) for the full license text.
