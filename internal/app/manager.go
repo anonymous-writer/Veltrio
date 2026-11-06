@@ -340,6 +340,54 @@ func (m *Manager) fail(id string, err error) {
 	m.persistLocked()
 }
 
+
+// SyncFilesystem reconciles completed download records with files on disk.
+// It deliberately does not import unrelated files from the download directory.
+func (m *Manager) SyncFilesystem() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	// Do not purge records if the configured download directory itself is
+	// unavailable (for example, an unmounted external drive).
+	dirInfo, dirErr := os.Stat(m.dir)
+	if dirErr != nil || !dirInfo.IsDir() {
+		return 0
+	}
+
+	changed := 0
+	for id, j := range m.jobs {
+		// Reconcile completed and legacy "missing" records. Keep active,
+		// paused and failed jobs so partial downloads can still be resumed.
+		if j.running || (j.item.Status != "completed" && j.item.Status != "missing") {
+			continue
+		}
+
+		fullPath := filepath.Join(m.dir, filepath.Base(j.item.Filename))
+		info, err := os.Stat(fullPath)
+		if err != nil || !info.Mode().IsRegular() {
+			delete(m.jobs, id)
+			changed++
+			continue
+		}
+
+		if j.item.Status == "missing" {
+			j.item.Status = "completed"
+			j.item.Error = ""
+			changed++
+		}
+		if j.item.Downloaded != info.Size() || j.item.Total != info.Size() {
+			j.item.Downloaded = info.Size()
+			j.item.Total = info.Size()
+			changed++
+		}
+	}
+
+	if changed > 0 {
+		m.persistLocked()
+	}
+	return changed
+}
+
 // ServeCompletedFile serves a finished download as an attachment.
 func (m *Manager) ServeCompletedFile(w http.ResponseWriter, r *http.Request, id string) {
 	m.mu.Lock()
