@@ -2,6 +2,34 @@
 
 Veltrio is a lightweight, self-hosted download manager for Linux, built with Go and a responsive web interface. It can run as a native Linux application or as a Docker container.
 
+<p align="center">
+  <img
+    src="https://raw.githubusercontent.com/anonymous-writer/Veltrio/main/docs/Veltrio-Icon-Set/Veltrio%20Self-Hosted%20Download%20Manager%20Banner.png"
+    alt="Veltrio Download Manager"
+    width="50%">
+</p>
+
+<p align="center">
+  <a href="https://anonymous-writer.github.io/Veltrio/">
+    <img src="https://img.shields.io/badge/Website-GitHub%20Pages-222222?logo=githubpages&logoColor=white" alt="Veltrio Website">
+  </a>
+  <a href="https://hub.docker.com/r/1968michael1968/veltrio">
+    <img src="https://img.shields.io/badge/Docker%20Hub-1968michael1968%2Fveltrio-2496ED?logo=docker&logoColor=white" alt="Veltrio on Docker Hub">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/anonymous-writer/Veltrio/pkgs/container/veltrio">
+    <img src="https://img.shields.io/badge/GHCR-docker%20image-181717?logo=github&logoColor=white" alt="GitHub Container Registry">
+  </a>
+  <a href="https://go.dev/dl/">
+    <img src="https://img.shields.io/badge/Go-1.27-00ADD8?logo=go&logoColor=white" alt="Go 1.27">
+  </a>
+  <a href="https://github.com/anonymous-writer/Veltrio/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-97CA00.svg" alt="MIT License">
+  </a>
+</p>
+
 ## Features
 
 - HTTP and HTTPS downloads
