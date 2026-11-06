@@ -356,9 +356,9 @@ func (m *Manager) SyncFilesystem() int {
 
 	changed := 0
 	for id, j := range m.jobs {
-		// Only completed records represent files that should still exist on disk.
-		// Keep active/paused/error jobs so their partial downloads can be resumed.
-		if j.running || j.item.Status != "completed" {
+		// Reconcile completed and legacy "missing" records. Keep active,
+		// paused and failed jobs so partial downloads can still be resumed.
+		if j.running || (j.item.Status != "completed" && j.item.Status != "missing") {
 			continue
 		}
 
@@ -370,6 +370,11 @@ func (m *Manager) SyncFilesystem() int {
 			continue
 		}
 
+		if j.item.Status == "missing" {
+			j.item.Status = "completed"
+			j.item.Error = ""
+			changed++
+		}
 		if j.item.Downloaded != info.Size() || j.item.Total != info.Size() {
 			j.item.Downloaded = info.Size()
 			j.item.Total = info.Size()
