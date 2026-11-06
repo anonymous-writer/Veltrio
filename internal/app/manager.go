@@ -347,31 +347,30 @@ func (m *Manager) SyncFilesystem() int {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	// Do not purge records if the configured download directory itself is
+	// unavailable (for example, an unmounted external drive).
+	dirInfo, dirErr := os.Stat(m.dir)
+	if dirErr != nil || !dirInfo.IsDir() {
+		return 0
+	}
+
 	changed := 0
-	for _, j := range m.jobs {
-		if j.running || (j.item.Status != "completed" && j.item.Status != "missing") {
+	for id, j := range m.jobs {
+		// Only completed records represent files that should still exist on disk.
+		// Keep active/paused/error jobs so their partial downloads can be resumed.
+		if j.running || j.item.Status != "completed" {
 			continue
 		}
 
 		fullPath := filepath.Join(m.dir, filepath.Base(j.item.Filename))
 		info, err := os.Stat(fullPath)
 		if err != nil || !info.Mode().IsRegular() {
-			if j.item.Status != "missing" {
-				j.item.Status = "missing"
-				j.item.Speed = 0
-				j.item.Error = "Datei im Downloadordner nicht gefunden"
-				changed++
-			}
+			delete(m.jobs, id)
+			changed++
 			continue
 		}
 
-		if j.item.Status == "missing" {
-			j.item.Status = "completed"
-			j.item.Error = ""
-			j.item.Downloaded = info.Size()
-			j.item.Total = info.Size()
-			changed++
-		} else if j.item.Downloaded != info.Size() {
+		if j.item.Downloaded != info.Size() || j.item.Total != info.Size() {
 			j.item.Downloaded = info.Size()
 			j.item.Total = info.Size()
 			changed++

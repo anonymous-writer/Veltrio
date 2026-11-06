@@ -972,19 +972,3 @@ main > header > .system-wrap{
 }
 
 
-/* Folder synchronization controls */
-.list-actions{
-    display:flex;
-    align-items:center;
-    justify-content:flex-end;
-    gap:8px;
-    flex-wrap:wrap;
-}
-.status.missing{
-    color:#fca5a5;
-    background:rgba(239,68,68,.12);
-    border:1px solid rgba(239,68,68,.28);
-}
-@media(max-width:600px){
-    .list-actions{width:100%;justify-content:flex-start}
-}
