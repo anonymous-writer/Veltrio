@@ -57,6 +57,7 @@ func (s *Server) ConfigureNtfy(n Ntfy, databaseDebug, notifyUnknownIPv4 bool) {
 }
 func (s *Server) routes() {
 	s.mux.HandleFunc("/api/downloads", s.downloads)
+	s.mux.HandleFunc("/api/downloads/sync", s.syncDownloads)
 	s.mux.HandleFunc("/api/downloads/", s.downloadAction)
 	s.mux.HandleFunc("/api/version", s.versionStatus)
 	s.mux.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
@@ -195,6 +196,15 @@ func (s *Server) downloads(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Methode nicht erlaubt", 405)
 	}
 }
+func (s *Server) syncDownloads(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Methode nicht erlaubt", http.StatusMethodNotAllowed)
+		return
+	}
+	changed := s.manager.SyncFilesystem()
+	writeJSON(w, map[string]any{"ok": true, "changed": changed})
+}
+
 func (s *Server) downloadAction(w http.ResponseWriter, r *http.Request) {
 	rest := strings.Trim(strings.TrimPrefix(r.URL.Path, "/api/downloads/"), "/")
 	parts := strings.Split(rest, "/")
