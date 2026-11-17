@@ -28,9 +28,10 @@ type Item struct {
 	Error      string `json:"error,omitempty"`
 }
 type job struct {
-	item    Item
-	cancel  context.CancelFunc
-	running bool
+	item            Item
+	cancel          context.CancelFunc
+	running         bool
+	resumeRequested bool
 }
 type Manager struct {
 	mu                 sync.Mutex
@@ -91,16 +92,42 @@ func (m *Manager) notifyEvent(title, message string) {
 		}()
 	}
 }
-func (m *Manager) persistLocked() {
+func (m *Manager) persistLocked() error {
 	items := make([]Item, 0, len(m.jobs))
 	for _, j := range m.jobs {
 		items = append(items, j.item)
 	}
-	b, _ := json.MarshalIndent(items, "", "  ")
-	tmp := m.stateFile + ".tmp"
-	if os.WriteFile(tmp, b, 0600) == nil {
-		_ = os.Rename(tmp, m.stateFile)
+	b, err := json.MarshalIndent(items, "", "  ")
+	if err != nil {
+		log.Printf("veltrio: status could not be encoded: %v", err)
+		return err
 	}
+	if err := os.MkdirAll(filepath.Dir(m.stateFile), 0700); err != nil {
+		log.Printf("veltrio: status directory unavailable: %v", err)
+		return err
+	}
+	tmp := m.stateFile + ".tmp"
+	f, err := os.OpenFile(tmp, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0600)
+	if err != nil {
+		log.Printf("veltrio: status file could not be opened: %v", err)
+		return err
+	}
+	if _, err = f.Write(b); err == nil {
+		err = f.Sync()
+	}
+	closeErr := f.Close()
+	if err == nil {
+		err = closeErr
+	}
+	if err == nil {
+		err = os.Rename(tmp, m.stateFile)
+	}
+	if err != nil {
+		_ = os.Remove(tmp)
+		log.Printf("veltrio: status could not be saved: %v", err)
+		return err
+	}
+	return nil
 }
 func (m *Manager) List() []Item {
 	m.mu.Lock()
@@ -161,6 +188,11 @@ func (m *Manager) Resume(id string) error {
 		return errors.New("Download ist bereits fertig")
 	}
 	if j.running {
+		// Pause cancels the current request asynchronously. Remember a quick
+		// resume click and restart only after the old worker has exited.
+		j.resumeRequested = true
+		j.item.Status = "queued"
+		_ = m.persistLocked()
 		m.mu.Unlock()
 		return nil
 	}
@@ -207,13 +239,22 @@ func (m *Manager) run(id string) {
 	m.persistLocked()
 	m.mu.Unlock()
 	defer func() {
+		restart := false
 		m.mu.Lock()
 		if x := m.jobs[id]; x != nil {
 			x.running = false
 			x.cancel = nil
+			if x.resumeRequested && x.item.Status != "completed" {
+				x.resumeRequested = false
+				x.item.Status = "queued"
+				restart = true
+			}
 		}
-		m.persistLocked()
+		_ = m.persistLocked()
 		m.mu.Unlock()
+		if restart {
+			go m.run(id)
+		}
 	}()
 	select {
 	case m.slots <- struct{}{}:
@@ -256,24 +297,60 @@ func (m *Manager) run(id string) {
 		}
 		return
 	}
-	if offset > 0 && resp.StatusCode != http.StatusPartialContent {
-		offset = 0
-		_ = f.Truncate(0)
-	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		resp.Body.Close()
 		f.Close()
 		m.fail(id, fmt.Errorf("HTTP %s", resp.Status))
 		return
 	}
+
+	// A server may ignore Range and return the complete file (200), in which
+	// case restart from byte zero. A 206 response must start at our exact offset.
 	if offset > 0 {
-		_, _ = f.Seek(offset, 0)
-	} else {
-		_, _ = f.Seek(0, 0)
+		if resp.StatusCode == http.StatusPartialContent {
+			rangeStart, rangeTotal, ok := parseContentRange(resp.Header.Get("Content-Range"))
+			if !ok || rangeStart != offset {
+				resp.Body.Close()
+				f.Close()
+				m.fail(id, fmt.Errorf("ungültiger Content-Range bei Fortsetzung: %q", resp.Header.Get("Content-Range")))
+				return
+			}
+			if rangeTotal >= 0 {
+				// Prefer the authoritative full representation size.
+				_ = rangeTotal
+			}
+		} else {
+			offset = 0
+			if err := f.Truncate(0); err != nil {
+				resp.Body.Close()
+				f.Close()
+				m.fail(id, err)
+				return
+			}
+		}
+	} else if resp.StatusCode == http.StatusPartialContent {
+		rangeStart, _, ok := parseContentRange(resp.Header.Get("Content-Range"))
+		if !ok || rangeStart != 0 {
+			resp.Body.Close()
+			f.Close()
+			m.fail(id, fmt.Errorf("unerwarteter partieller HTTP-Download: %q", resp.Header.Get("Content-Range")))
+			return
+		}
+	}
+	if _, err := f.Seek(offset, 0); err != nil {
+		resp.Body.Close()
+		f.Close()
+		m.fail(id, err)
+		return
 	}
 	total := resp.ContentLength
-	if total >= 0 {
-		total += offset
+	if resp.StatusCode == http.StatusPartialContent {
+		_, rangeTotal, ok := parseContentRange(resp.Header.Get("Content-Range"))
+		if ok && rangeTotal >= 0 {
+			total = rangeTotal
+		} else if total >= 0 {
+			total += offset
+		}
 	}
 	m.mu.Lock()
 	if x := m.jobs[id]; x != nil {
@@ -305,17 +382,23 @@ func (m *Manager) run(id string) {
 			}
 		}
 		if readErr != nil {
-			if errors.Is(readErr, io.EOF) {
+			if errors.Is(readErr, io.EOF) && ctx.Err() == nil {
 				m.mu.Lock()
 				if x := m.jobs[id]; x != nil {
 					x.item.Downloaded += bytesSince
 					x.item.Speed = 0
 					if x.item.Status == "downloading" {
-						x.item.Status = "completed"
-						go m.notifyEvent("Veltrio: Download abgeschlossen", x.item.Filename)
+						if x.item.Total >= 0 && x.item.Downloaded != x.item.Total {
+							x.item.Status = "error"
+							x.item.Error = fmt.Sprintf("Download unvollständig: %d von %d Bytes empfangen", x.item.Downloaded, x.item.Total)
+						} else {
+							x.item.Status = "completed"
+							x.item.Error = ""
+							go m.notifyEvent("Veltrio: Download abgeschlossen", x.item.Filename)
+						}
 					}
 				}
-				m.persistLocked()
+				_ = m.persistLocked()
 				m.mu.Unlock()
 			} else if ctx.Err() == nil {
 				m.fail(id, readErr)
@@ -329,6 +412,32 @@ func (m *Manager) run(id string) {
 	resp.Body.Close()
 	f.Close()
 }
+func parseContentRange(value string) (start, total int64, ok bool) {
+	// Expected format: "bytes START-END/TOTAL" (or */TOTAL for unsatisfied ranges).
+	var unit, span string
+	if _, err := fmt.Sscanf(value, "%s %s", &unit, &span); err != nil || unit != "bytes" {
+		return 0, -1, false
+	}
+	rangePart, totalPart, found := strings.Cut(span, "/")
+	if !found || rangePart == "*" {
+		return 0, -1, false
+	}
+	startPart, _, found := strings.Cut(rangePart, "-")
+	if !found {
+		return 0, -1, false
+	}
+	if _, err := fmt.Sscanf(startPart, "%d", &start); err != nil {
+		return 0, -1, false
+	}
+	total = -1
+	if totalPart != "*" {
+		if _, err := fmt.Sscanf(totalPart, "%d", &total); err != nil {
+			return 0, -1, false
+		}
+	}
+	return start, total, true
+}
+
 func (m *Manager) fail(id string, err error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -339,7 +448,6 @@ func (m *Manager) fail(id string, err error) {
 	}
 	m.persistLocked()
 }
-
 
 // SyncFilesystem reconciles completed download records with files on disk.
 // It deliberately does not import unrelated files from the download directory.
@@ -355,7 +463,7 @@ func (m *Manager) SyncFilesystem() int {
 	}
 
 	changed := 0
-	for id, j := range m.jobs {
+	for _, j := range m.jobs {
 		// Reconcile completed and legacy "missing" records. Keep active,
 		// paused and failed jobs so partial downloads can still be resumed.
 		if j.running || (j.item.Status != "completed" && j.item.Status != "missing") {
@@ -365,8 +473,12 @@ func (m *Manager) SyncFilesystem() int {
 		fullPath := filepath.Join(m.dir, filepath.Base(j.item.Filename))
 		info, err := os.Stat(fullPath)
 		if err != nil || !info.Mode().IsRegular() {
-			delete(m.jobs, id)
-			changed++
+			if j.item.Status != "missing" {
+				j.item.Status = "missing"
+				j.item.Speed = 0
+				j.item.Error = "Datei im Downloadordner nicht gefunden"
+				changed++
+			}
 			continue
 		}
 

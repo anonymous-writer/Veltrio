@@ -17,8 +17,12 @@ func TestLoadCreatesDefaultAndReadsValues(t *testing.T) {
 	if cfg.Port != 3010 {
 		t.Fatalf("default port=%d", cfg.Port)
 	}
-	if _, err := os.Stat(file); err != nil {
+	info, err := os.Stat(file)
+	if err != nil {
 		t.Fatal("default config was not created:", err)
+	}
+	if info.Mode().Perm() != 0600 {
+		t.Fatalf("default config permissions=%#o, want 0600", info.Mode().Perm())
 	}
 	content := "server:\n  host: \"127.0.0.1\"\n  port: 8088\npaths:\n  data: \"/tmp/veltrio-data\"\n  downloads: \"/tmp/veltrio-downloads\"\n"
 	if err := os.WriteFile(file, []byte(content), 0600); err != nil {
